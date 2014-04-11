@@ -10,15 +10,31 @@
 #include "../include/vecmath/vecmath.h"
 using namespace std;
 
-//Ray-Triangle Intersection
-//Returns 1 if triangle and ray intersect, 0 otherwise
-//
+
+/////////////
+// GLOBALS //
+/////////////
+typedef std::vector<CompFab::Triangle> TriangleList;
+TriangleList voxelLampMeshTriangles;
+CompFab::VoxelGrid *g_voxelGrid;
+unsigned int voxelRes;
+
+
 double detMat(double A11, double A12, double A13,
               double A21, double A22, double A23,
               double A31, double A32, double A33)
 {
     return A11*(A22*A33 - A23*A32) - A12*(A21*A33 - A23*A31) + A13*(A21*A32 - A22*A31);
 }
+
+////////////////
+// INITIALIZE //
+////////////////
+
+/*
+  Ray-Triangle Intersection
+  @returns 1 if triangle and ray intersect, 0 otherwise
+*/
 int rayTriangleIntersection(CompFab::Ray &ray, CompFab::Triangle &triangle)
 {
     CompFab::Vec3 e1(triangle.m_v2 - triangle.m_v1);
@@ -50,13 +66,10 @@ int rayTriangleIntersection(CompFab::Ray &ray, CompFab::Triangle &triangle)
 
 }
 
-//Triangle list (global)
-typedef std::vector<CompFab::Triangle> TriangleList;
-
-TriangleList g_triangleList;
-CompFab::VoxelGrid *g_voxelGrid;
-
-//Number of intersections with surface made by a ray originating at voxel and cast in direction.
+/*
+  Num Intersections with Ray
+  @returns number of intersections with surface made by a ray originating at voxel and cast in direction.
+*/
 int numSurfaceIntersections(CompFab::Vec3 &voxelPos, CompFab::Vec3 &dir)
 {
     
@@ -65,8 +78,8 @@ int numSurfaceIntersections(CompFab::Vec3 &voxelPos, CompFab::Vec3 &dir)
     /* Check and return the number of times a ray cast in direction dir, 
      * from voxel center voxelPos intersects the surface */
     CompFab::RayStruct vRay = CompFab::RayStruct(voxelPos, dir);
-    for(unsigned int i = 0; i < g_triangleList.size(); i++){
-        CompFab::Triangle triangle = g_triangleList[i];
+    for(unsigned int i = 0; i < voxelLampMeshTriangles.size(); i++){
+        CompFab::Triangle triangle = voxelLampMeshTriangles[i];
         if(rayTriangleIntersection(vRay, triangle) == 1){
             numHits ++;
         }
@@ -74,9 +87,14 @@ int numSurfaceIntersections(CompFab::Vec3 &voxelPos, CompFab::Vec3 &dir)
     return numHits;
 }
 
+/*
+  Load Mesh 
+  @set voxelLampMeshTriangles TODO: voxelLampMeshTriangles not voxelized mesh, modify saveVoxelsToObj to do the correct thing 
+  @set g_voxelGrid
+*/
 bool loadMesh(char *filename, unsigned int dim)
 {
-    g_triangleList.clear();
+    voxelLampMeshTriangles.clear();
     
     Mesh *tempMesh = new Mesh(filename, true);
     
@@ -88,7 +106,7 @@ bool loadMesh(char *filename, unsigned int dim)
         v1 = tempMesh->v[tempMesh->t[tri][0]];
         v2 = tempMesh->v[tempMesh->t[tri][1]];
         v3 = tempMesh->v[tempMesh->t[tri][2]];
-        g_triangleList.push_back(CompFab::Triangle(v1,v2,v3));
+        voxelLampMeshTriangles.push_back(CompFab::Triangle(v1,v2,v3));
     }
 
     //Create Voxel Grid
@@ -120,6 +138,10 @@ bool loadMesh(char *filename, unsigned int dim)
    
 }
 
+/*
+  Save Voxels to Object File 
+  TODO: Modify this to convert voxel representation to triangle rep, store in voxelLampMeshTriangles
+*/
 void saveVoxelsToObj(const char * outfile)
 {
  
@@ -150,28 +172,23 @@ void saveVoxelsToObj(const char * outfile)
     mout.save_obj(outfile);
 }
 
-
-int main(int argc, char **argv)
+/*
+  Voxelize input mesh, update voxel representation, update voxelized mesh representation 
+  TODO: program this. 
+*/
+void voxelizer(char* filename, unsigned int voxelres) 
 {
 
-    unsigned int dim = 64; //dimension of voxel grid (e.g. 32x32x32)
+    unsigned int dim = voxelres; //dimension of voxel grid (e.g. 32x32x32)
 
-    //Load OBJ
-    if(argc < 3)
-    {
-        std::cout<<"Usage: Voxelizer InputMeshFilename OutputMeshFilename \n";
-        exit(0);
-    }
-    
-    std::cout<<"Load Mesh : "<<argv[1]<<"\n";
-    loadMesh(argv[1], dim);
+    loadMesh(filename, dim);
     
 
     
-    //Cast ray, check if voxel is inside or outside
-    //even number of surface intersections = outside (OUT then IN then OUT)
+    // Cast ray, check if voxel is inside or outside
+    // even number of surface intersections = outside (OUT then IN then OUT)
     // odd number = inside (IN then OUT)
-    //CompFab::Vec3 voxelPos;
+
     CompFab::Vec3 direction(1.0,0.0,0.0);
 
     int nx = g_voxelGrid->m_dimX;
@@ -181,10 +198,9 @@ int main(int argc, char **argv)
     CompFab::Vec3 left = g_voxelGrid->m_lowerLeft;
     
     CompFab::Vec3 hspacing(0.5*spacing, 0.5*spacing, 0.5*spacing);
-
-    std::cout<<"Lower left : "<<argv[1]<<"\n";
     
-    /********* ASSIGNMENT *********/
+    // Iterate over all voxels in g_voxelGrid and test whether they are inside our outside 
+    // of the  surface defined by the triangles in voxelLampMeshTriangles
     for (int ii = 0; ii < nx; ii++) {
         for (int jj = 0; jj < ny; jj++) {
             for (int kk = 0; kk < nz; kk++) {
@@ -195,12 +211,22 @@ int main(int argc, char **argv)
             }
         }
     }
+}
 
-    /* Iterate over all voxels in g_voxelGrid and test whether they are inside our outside of the
-     * surface defined by the triangles in g_triangleList */
-    
-    //Write out voxel data as obj
-    saveVoxelsToObj(argv[2]);
-    
-    delete g_voxelGrid;
+int main(int argc, char **argv)
+{
+      if(argc < 4)
+      {
+          std::cout<<"Usage: Voxelizer InputMeshFilename OutputMeshFilename voxelRes\n";
+          exit(0);
+      }
+      std::cout<<"Load Mesh : "<<argv[1]<<"\n";
+      std::cout<<"Voxel resolution : "<<argv[2]<<"\n";
+
+      voxelRes = atoi(argv[3]); 
+      voxelizer(argv[1], voxelRes);
+
+      // TODO: for testing right now
+      saveVoxelsToObj(argv[2]);
+      delete g_voxelGrid;
 }
