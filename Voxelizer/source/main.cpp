@@ -1,10 +1,14 @@
 //Computational Fabrication Assignment #1
 // By David Levin 2014
-#include <iostream>
+#include <GL/glut.h>
+#include <cmath>
 #include <cstdlib>
+#include <iostream>
 #include <vector>
 #include "../include/CompFab.h"
 #include "../include/Mesh.h"
+#include "../include/vecmath/vecmath.h"
+using namespace std;
 
 //Ray-Triangle Intersection
 //Returns 1 if triangle and ray intersect, 0 otherwise
