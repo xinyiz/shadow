@@ -277,19 +277,13 @@ void createSceneData(){
 //      delete g_voxelGrid;
 //}
 
-
-
 // GLUT CALLBACK functions
 void displayCB();
 void reshapeCB(int w, int h);
 void timerCB(int millisec);
-void idleCB();
-void keyboardCB(unsigned char key, int x, int y);
 void mouseCB(int button, int stat, int x, int y);
 void mouseMotionCB(int x, int y);
-
 // CALLBACK function when exit() called ///////////////////////////////////////
-
 void exitCB();
 void initGL();
 int  initGLUT(int argc, char **argv);
@@ -299,23 +293,14 @@ void initLights();
 void setCamera(float posX, float posY, float posZ, float targetX, float targetY, float targetZ);
 GLuint createVBO(const void* data, int dataSize, GLenum target=GL_ARRAY_BUFFER_ARB, GLenum usage=GL_STATIC_DRAW_ARB);
 void deleteVBO(const GLuint vboId);
-void showInfo();
-void toOrtho();
 void toPerspective();
-
 // constants
 const int   SCREEN_WIDTH    = 400;
 const int   SCREEN_HEIGHT   = 300;
 const float CAMERA_DISTANCE = 5.0f;
-const int   TEXT_WIDTH      = 8;
-const int   TEXT_HEIGHT     = 13;
-
 // global variables
-
 void *font = GLUT_BITMAP_8_BY_13;
-
 GLuint vboId = 0;                   // ID of VBO for vertex arrays
-
 int screenWidth;
 int screenHeight;
 bool mouseLeftDown;
@@ -325,11 +310,6 @@ float cameraAngleX;
 float cameraAngleY;
 float cameraDistance;
 int drawMode = 0;
-
-
-
-
-
 // cube ///////////////////////////////////////////////////////////////////////
 //    v6----- v5
 //   /|      /|
@@ -386,7 +366,6 @@ GLfloat colors[]    = { 1, 1, 1,   1, 1, 0,   1, 0, 0,      // v0-v1-v2 (front)
 // function pointers for VBO Extension
 // Windows needs to get function pointers from ICD OpenGL drivers,
 // because opengl32.dll does not support extensions higher than v1.1.
-
 #ifdef _WIN32
 PFNGLGENBUFFERSARBPROC            pglGenBuffersARB = 0;             // VBO Name Generation Procedure
 PFNGLBINDBUFFERARBPROC            pglBindBufferARB = 0;             // VBO Bind Procedure
@@ -406,19 +385,8 @@ PFNGLUNMAPBUFFERARBPROC           pglUnmapBufferARB = 0;            // unmap VBO
 #define glMapBufferARB            pglMapBufferARB
 #define glUnmapBufferARB          pglUnmapBufferARB
 #endif
-
-
-
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-
 int main(int argc, char **argv)
-
 {
-
     initSharedMem();
     // init GLUT and GL
     initGLUT(argc, argv);
@@ -460,16 +428,10 @@ int main(int argc, char **argv)
     return 0;
 }
 
-
-
 ///////////////////////////////////////////////////////////////////////////////
-
 // initialize GLUT for windowing
-
 ///////////////////////////////////////////////////////////////////////////////
-
 int initGLUT(int argc, char **argv)
-
 {
 
     // GLUT stuff for windowing
@@ -486,32 +448,23 @@ int initGLUT(int argc, char **argv)
     // register GLUT callback functions
     glutDisplayFunc(displayCB);
     glutTimerFunc(33, timerCB, 33);                 // redraw only every given millisec
-    //glutIdleFunc(idleCB);                           // redraw when idle
     glutReshapeFunc(reshapeCB);
-    glutKeyboardFunc(keyboardCB);
     glutMouseFunc(mouseCB);
     glutMotionFunc(mouseMotionCB);
     return handle;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
 // initialize OpenGL
-
 // disable unused features
-
 ///////////////////////////////////////////////////////////////////////////////
-
 void initGL()
-
 {
 
     glShadeModel(GL_SMOOTH);                    // shading mathod: GL_SMOOTH or GL_FLAT
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);      // 4-byte pixel alignment
     // enable /disable features
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-    //glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    //glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
     glEnable(GL_TEXTURE_2D);
@@ -527,11 +480,8 @@ void initGL()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
 // initialize global variables
-
 ///////////////////////////////////////////////////////////////////////////////
-
 bool initSharedMem()
 {
     screenWidth = SCREEN_WIDTH;
@@ -543,27 +493,20 @@ bool initSharedMem()
     drawMode = 0; // 0:fill, 1: wireframe, 2:points
     return true;
 }
-///////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////
 // clean up global vars
-
 ///////////////////////////////////////////////////////////////////////////////
-
 void clearSharedMem()
 {
     deleteVBO(vboId);
-
     vboId = 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
 // initialize lights
-
 ///////////////////////////////////////////////////////////////////////////////
-
 void initLights()
-
 {
     // set up light colors (ambient, diffuse, specular)
     GLfloat lightKa[] = {.2f, .2f, .2f, 1.0f};  // ambient light
@@ -577,18 +520,17 @@ void initLights()
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
     glEnable(GL_LIGHT0);                        // MUST enable each light source after configuration
 }
+
 ///////////////////////////////////////////////////////////////////////////////
-
 // set camera position and lookat direction
-
 ///////////////////////////////////////////////////////////////////////////////
 void setCamera(float posX, float posY, float posZ, float targetX, float targetY, float targetZ)
-
 {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     gluLookAt(posX, posY, posZ, targetX, targetY, targetZ, 0, 1, 0); // eye(x,y,z), focal(x,y,z), up(x,y,z)
 }
+
 ///////////////////////////////////////////////////////////////////////////////
 // generate vertex buffer object and bind it with its data
 // You must give 2 hints about data usage; target and mode, so that OpenGL can
@@ -601,9 +543,7 @@ void setCamera(float posX, float posY, float posZ, float targetX, float targetY,
 // GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB,
 // GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB.
 ///////////////////////////////////////////////////////////////////////////////
-
 GLuint createVBO(const void* data, int dataSize, GLenum target, GLenum usage)
-
 {
     GLuint id = 0;  // 0 is reserved, glGenBuffersARB() will return non-zero id if success
     glGenBuffersARB(1, &id);                        // create a vbo
@@ -620,12 +560,10 @@ GLuint createVBO(const void* data, int dataSize, GLenum target, GLenum usage)
     }
     return id;      // return VBO id
 }
+
 ///////////////////////////////////////////////////////////////////////////////
-
 // destroy a VBO
-
 // If VBO id is not valid or zero, then OpenGL ignores it silently.
-
 ///////////////////////////////////////////////////////////////////////////////
 void deleteVBO(const GLuint vboId)
 {
@@ -633,28 +571,7 @@ void deleteVBO(const GLuint vboId)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-
-// set projection matrix as orthogonal
-
-///////////////////////////////////////////////////////////////////////////////
-
-void toOrtho()
-
-{
-    // set viewport to be the entire window
-    glViewport(0, 0, (GLsizei)screenWidth, (GLsizei)screenHeight);
-    // set orthographic viewing frustum
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, screenWidth, 0, screenHeight, -1, 1);
-    // switch to modelview matrix in order to set scene
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-}
-///////////////////////////////////////////////////////////////////////////////
-
 // set the projection matrix as perspective
-
 ///////////////////////////////////////////////////////////////////////////////
 void toPerspective()
 {
@@ -669,19 +586,10 @@ void toPerspective()
     glLoadIdentity();
 }
 
-
-
-
 //=============================================================================
-
 // CALLBACKS
-
 //=============================================================================
-
-
-
 void displayCB()
-
 {
     // clear buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -726,45 +634,6 @@ void timerCB(int millisec)
 {
     glutTimerFunc(millisec, timerCB, millisec);
     glutPostRedisplay();
-}
-
-void idleCB()
-{
-    glutPostRedisplay();
-}
-
-void keyboardCB(unsigned char key, int x, int y)
-{
-    switch(key)
-    {
-    case 27: // ESCAPE
-        exit(0);
-        break;
-    case 'd': // switch rendering modes (fill -> wire -> point)
-    case 'D':
-        drawMode = ++drawMode % 3;
-        if(drawMode == 0)        // fill mode
-        {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            glEnable(GL_DEPTH_TEST);
-            glEnable(GL_CULL_FACE);
-        }
-        else if(drawMode == 1)  // wireframe mode
-        {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glDisable(GL_DEPTH_TEST);
-            glDisable(GL_CULL_FACE);
-        }
-        else                    // point mode
-        {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-            glDisable(GL_DEPTH_TEST);
-            glDisable(GL_CULL_FACE);
-        }
-        break;
-    default:
-        ;
-    }
 }
 
 void mouseCB(int button, int state, int x, int y)
