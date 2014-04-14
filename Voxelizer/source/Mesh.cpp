@@ -115,6 +115,7 @@ void Mesh::save(std::ostream & out, std::vector<CompFab::Vec3> * vert)
   if(vert==0){
     vert = &v;
   }
+  std::cout << "Mesh vertices size: " << vert->size() << "\n";
   for(size_t ii=0;ii<vert->size();ii++){
     out<<vTok<<" "<<(*vert)[ii][0]<<" "<<(*vert)[ii][1]<<" "<<(*vert)[ii][2]<<"\n";
   }
@@ -128,6 +129,7 @@ void Mesh::save(std::ostream & out, std::vector<CompFab::Vec3> * vert)
       <<t[ii][2]+1<<bslash<<texId[ii][2]+1<<"\n";
     }
   }else{
+    std::cout << "Mesh triangles size: " << t.size() << "\n";
     for(size_t ii=0;ii<t.size();ii++){
       out<<fTok<<" "<<t[ii][0]+1<<" "<<
           t[ii][1]+1<<" "<<t[ii][2]+1<<"\n";
