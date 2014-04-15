@@ -18,7 +18,10 @@ using std::cout;
 using std::endl;
 using std::ends;
 
-// constants
+///////////////
+// CONSTANTS //
+///////////////
+// GLUT
 const int   SCREEN_WIDTH    = 400;
 const int   SCREEN_HEIGHT   = 300;
 const float CAMERA_DISTANCE = 5.0f;
@@ -27,6 +30,12 @@ const float CAMERA_DISTANCE = 5.0f;
 /////////////
 // GLOBALS //
 /////////////
+// Voxelized Lamp Mesh 
+
+GLfloat *lamp_vertices;
+GLfloat *lamp_normals;
+GLushort *lamp_triangles;
+
 GLuint vbo_vertices;
 GLuint vbo_normals;
 GLuint ibo_elements;
@@ -34,16 +43,19 @@ GLuint ibo_elements;
 unsigned int vertices_size;
 unsigned int triangles_size;
 
+// Used by voxelizer code from assn 0;
 typedef std::vector<CompFab::Triangle> TriangleList;
-TriangleList voxelLampMeshTriangles;
+TriangleList g_voxelTriangles;
 CompFab::VoxelGrid *g_voxelGrid;
 unsigned int voxelRes;
+
+// GLUT 
 float lightposx = 0.0f;
 float lightposy = 0.0f;
 float roomDim = 50.0f;
+
 // global variables
 void *font = GLUT_BITMAP_8_BY_13;
-GLuint vboId = 0;                   // ID of VBO for vertex arrays
 int screenWidth;
 int screenHeight;
 bool mouseLeftDown;
@@ -52,7 +64,6 @@ float mouseX, mouseY;
 float cameraAngleX;
 float cameraAngleY;
 float cameraDistance;
-// TODO: VBO for Lamp Mesh
 
 double detMat(double A11, double A12, double A13,
               double A21, double A22, double A23,
@@ -64,7 +75,6 @@ double detMat(double A11, double A12, double A13,
 ////////////////
 // INITIALIZE //
 ////////////////
-
 /*
   Ray-Triangle Intersection
   @returns 1 if triangle and ray intersect, 0 otherwise
@@ -112,8 +122,8 @@ int numSurfaceIntersections(CompFab::Vec3 &voxelPos, CompFab::Vec3 &dir)
     /* Check and return the number of times a ray cast in direction dir, 
      * from voxel center voxelPos intersects the surface */
     CompFab::RayStruct vRay = CompFab::RayStruct(voxelPos, dir);
-    for(unsigned int i = 0; i < voxelLampMeshTriangles.size(); i++){
-        CompFab::Triangle triangle = voxelLampMeshTriangles[i];
+    for(unsigned int i = 0; i < g_voxelTriangles.size(); i++){
+        CompFab::Triangle triangle = g_voxelTriangles[i];
         if(rayTriangleIntersection(vRay, triangle) == 1){
             numHits ++;
         }
@@ -122,13 +132,12 @@ int numSurfaceIntersections(CompFab::Vec3 &voxelPos, CompFab::Vec3 &dir)
 }
 
 /*
-  Load Mesh 
-  @set voxelLampMeshTriangles TODO: voxelLampMeshTriangles not voxelized mesh, modify saveVoxelsToObj to do the correct thing 
+  Load Mesh and construct the voxel grid
   @set g_voxelGrid
 */
 bool loadMesh(char *filename, unsigned int dim)
 {
-    voxelLampMeshTriangles.clear();
+    g_voxelTriangles.clear();
     
     Mesh *tempMesh = new Mesh(filename, true);
     
@@ -140,7 +149,7 @@ bool loadMesh(char *filename, unsigned int dim)
         v1 = tempMesh->v[tempMesh->t[tri][0]];
         v2 = tempMesh->v[tempMesh->t[tri][1]];
         v3 = tempMesh->v[tempMesh->t[tri][2]];
-        voxelLampMeshTriangles.push_back(CompFab::Triangle(v1,v2,v3));
+        g_voxelTriangles.push_back(CompFab::Triangle(v1,v2,v3));
     }
 
     //Create Voxel Grid
@@ -173,7 +182,6 @@ bool loadMesh(char *filename, unsigned int dim)
 
 /*
   Save Voxels to Object File 
-  TODO: Modify this to convert voxel representation to triangle rep, store in voxelLampMeshTriangles
 */
 void saveVoxelsToObj(const char * outfile)
 {
@@ -205,6 +213,10 @@ void saveVoxelsToObj(const char * outfile)
     mout.save_obj(outfile);
 }
 
+/*
+  Convert the voxel representation of the lamp into a mesh.
+  @sets lamp_vertices, lamp_normals, lamp_triangles
+*/
 void triangulateVoxelGrid(const char * outfile)
 {
     cout << "Trianglulating\n";
@@ -232,14 +244,16 @@ void triangulateVoxelGrid(const char * outfile)
             }
         }
     }
+    // Compute the normals
     mout.compute_norm();
     mout.save_obj(outfile);
 
     GLfloat p1, p2, p3;
-    GLfloat *temp_vertices;
     vertices_size = mout.v.size();
     triangles_size = mout.t.size();
-    temp_vertices = new GLfloat[vertices_size*3];
+
+    //Populate the vertices and upload data
+    lamp_vertices = new GLfloat[vertices_size*3];
     cout << "parsed triangles size: " << triangles_size << " " << "\n";
     cout << "parsed vertices size: " << vertices_size << " " << "\n";
     for(unsigned int vert =0; vert<mout.v.size(); ++vert)
@@ -247,69 +261,61 @@ void triangulateVoxelGrid(const char * outfile)
         p1 = (GLfloat) mout.v[vert][0];
         p2 = (GLfloat) mout.v[vert][1];
         p3 = (GLfloat) mout.v[vert][2];
-        temp_vertices[vert*3] = p1;
-        temp_vertices[vert*3 + 1] = p2;
-        temp_vertices[vert*3 + 2] = p3;
-        cout << "Vertex " << vert << ": " << "(" << p1 << "," << p2 << "," << p3 << ")\n";
+        lamp_vertices[vert*3] = p1;
+        lamp_vertices[vert*3 + 1] = p2;
+        lamp_vertices[vert*3 + 2] = p3;
     }
-    cout << "last element: " << temp_vertices[(vertices_size-1)*3+2] << " " << "\n";
 
     glGenBuffers(1, &vbo_vertices);                        // create a vbo
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);                    // activate vbo id to use
-    glBufferData(GL_ARRAY_BUFFER, vertices_size*3*sizeof(GLfloat), temp_vertices, GL_STREAM_DRAW); // upload data to video card
+    glBufferData(GL_ARRAY_BUFFER, vertices_size*3*sizeof(GLfloat), lamp_vertices, GL_STREAM_DRAW); // upload data to video card
 
-    //GLfloat *temp_normals;
-    //temp_normals = new GLfloat[(mout.n.size()*3)];
-    //for(unsigned int norm =0; norm<mout.n.size(); ++norm)
-    //{
-    //    p1 = (GLfloat) mout.v[norm][0];
-    //    p2 = (GLfloat) mout.v[norm][1];
-    //    p3 = (GLfloat) mout.v[norm][2];
-    //    temp_normals[norm*3] = p1;
-    //    temp_normals[norm*3 + 1] = p2;
-    //    temp_normals[norm*3 + 2] = p3;
-    //}
-    //glGenBuffers(1, &vbo_normals);                        // create a vbo
-    //glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);                    // activate vbo id to use
-    //glBufferData(GL_ARRAY_BUFFER, vertices_size*3*sizeof(GLfloat), temp_normals, GL_STREAM_DRAW); // upload data to video card
+    //Populate the normals and upload data
+    lamp_normals = new GLfloat[(mout.n.size()*3)];
+    for(unsigned int norm =0; norm<mout.n.size(); ++norm)
+    {
+        p1 = (GLfloat) mout.v[norm][0];
+        p2 = (GLfloat) mout.v[norm][1];
+        p3 = (GLfloat) mout.v[norm][2];
+        lamp_normals[norm*3] = p1;
+        lamp_normals[norm*3 + 1] = p2;
+        lamp_normals[norm*3 + 2] = p3;
+    }
+    glGenBuffers(1, &vbo_normals);                        // create a vbo
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);                    // activate vbo id to use
+    glBufferData(GL_ARRAY_BUFFER, vertices_size*3*sizeof(GLfloat), lamp_normals, GL_STREAM_DRAW); // upload data to video card
 
-    GLushort *temp_elements;
-    temp_elements = new GLushort[(mout.t.size()*3)];
-    //temp_elements[0] = 0;
-    //temp_elements[1] = 3;
-    //temp_elements[2] = 2;
+    //Populate the triangle indices and upload data
+    lamp_triangles = new GLushort[(mout.t.size()*3)];
     for(unsigned int tri =0; tri<mout.t.size(); ++tri)
     {
         p1 = (GLuint) mout.t[tri][0];
         p2 = (GLuint) mout.t[tri][1];
         p3 = (GLuint) mout.t[tri][2];
-        temp_elements[tri*3] = p1;
-        temp_elements[tri*3 + 1] = p2;
-        temp_elements[tri*3 + 2] = p3;
-        cout << "Triangle " << tri << ": " << "(" << p1 << "," << p2 << "," << p3 << ")\n";
-
+        lamp_triangles[tri*3] = p1;
+        lamp_triangles[tri*3 + 1] = p2;
+        lamp_triangles[tri*3 + 2] = p3;
     }
     glGenBuffers(1, &ibo_elements);                        // create a vbo
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);                    // activate vbo id to use
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangles_size*3*sizeof(GLushort), temp_elements, GL_STREAM_DRAW); // upload data to video card
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangles_size*3*sizeof(GLushort), lamp_triangles, GL_STREAM_DRAW); // upload data to video card
 }
+
 /*
   Voxelize input mesh, update voxel representation, update voxelized mesh representation 
-  TODO: program this. 
+  @sets g_voxelgrid
+  @sets lamp_vertices, lamp_normals, lamp_triangles
 */
 void voxelizer(char* filename, char* outfilename, unsigned int voxelres) 
 {
 
     unsigned int dim = voxelres; //dimension of voxel grid (e.g. 32x32x32)
 
+    // Construct the voxel grid.
     loadMesh(filename, dim);
-    
 
     
-    // Cast ray, check if voxel is inside or outside
-    // even number of surface intersections = outside (OUT then IN then OUT)
-    // odd number = inside (IN then OUT)
-
+    // Carve the voxel grid to produce the input lamp voxel representation
     CompFab::Vec3 direction(1.0,0.0,0.0);
 
     int nx = g_voxelGrid->m_dimX;
@@ -332,6 +338,8 @@ void voxelizer(char* filename, char* outfilename, unsigned int voxelres)
             }
         }
     }
+
+    // Now produce the lamp mesh representation from the voxel representation
     triangulateVoxelGrid(outfilename);
 }
 
@@ -346,13 +354,17 @@ void createSceneData(){
 
 
 }
+
+////////////////
+// RENDERING ///
+////////////////
 // GLUT CALLBACK functions
 void displayCB();
 void reshapeCB(int w, int h);
 void timerCB(int millisec);
 void mouseCB(int button, int stat, int x, int y);
 void mouseMotionCB(int x, int y);
-// CALLBACK function when exit() called ///////////////////////////////////////
+// CALLBACK function when exit() called //
 void exitCB();
 void initGL();
 int  initGLUT(int argc, char **argv);
@@ -363,54 +375,6 @@ void setCamera(float posX, float posY, float posZ, float targetX, float targetY,
 GLuint createVBO(const void* data, int dataSize, GLenum target=GL_ARRAY_BUFFER, GLenum usage=GL_STATIC_DRAW);
 void deleteVBO(const GLuint vboId);
 void toPerspective();
-
-GLfloat vertices[]  = { 1, 1, 1,  -1, 1, 1,  -1,-1, 1,      // v0-v1-v2 (front)
-                       -1,-1, 1,   1,-1, 1,   1, 1, 1,      // v2-v3-v0
-                        1, 1, 1,   1,-1, 1,   1,-1,-1,      // v0-v3-v4 (right)
-                        1,-1,-1,   1, 1,-1,   1, 1, 1,      // v4-v5-v0
-                        1, 1, 1,   1, 1,-1,  -1, 1,-1,      // v0-v5-v6 (top)
-                       -1, 1,-1,  -1, 1, 1,   1, 1, 1,      // v6-v1-v0
-                       -1, 1, 1,  -1, 1,-1,  -1,-1,-1,      // v1-v6-v7 (left)
-                       -1,-1,-1,  -1,-1, 1,  -1, 1, 1,      // v7-v2-v1
-                       -1,-1,-1,   1,-1,-1,   1,-1, 1,      // v7-v4-v3 (bottom)
-                        1,-1, 1,  -1,-1, 1,  -1,-1,-1,      // v3-v2-v7
-                        1,-1,-1,  -1,-1,-1,  -1, 1,-1,      // v4-v7-v6 (back)
-                       -1, 1,-1,   1, 1,-1,   1,-1,-1 };    // v6-v5-v4
-// normal array
-GLfloat normals[]   = { 0, 0, 1,   0, 0, 1,   0, 0, 1,      // v0-v1-v2 (front)
-                        0, 0, 1,   0, 0, 1,   0, 0, 1,      // v2-v3-v0
-                        1, 0, 0,   1, 0, 0,   1, 0, 0,      // v0-v3-v4 (right)
-                        1, 0, 0,   1, 0, 0,   1, 0, 0,      // v4-v5-v0
-                        0, 1, 0,   0, 1, 0,   0, 1, 0,      // v0-v5-v6 (top)
-                        0, 1, 0,   0, 1, 0,   0, 1, 0,      // v6-v1-v0
-                       -1, 0, 0,  -1, 0, 0,  -1, 0, 0,      // v1-v6-v7 (left)
-                       -1, 0, 0,  -1, 0, 0,  -1, 0, 0,      // v7-v2-v1
-                        0,-1, 0,   0,-1, 0,   0,-1, 0,      // v7-v4-v3 (bottom)
-                        0,-1, 0,   0,-1, 0,   0,-1, 0,      // v3-v2-v7
-                        0, 0,-1,   0, 0,-1,   0, 0,-1,      // v4-v7-v6 (back)
-                        0, 0,-1,   0, 0,-1,   0, 0,-1 };    // v6-v5-v4
-// function pointers for VBO Extension
-// Windows needs to get function pointers from ICD OpenGL drivers,
-// because opengl32.dll does not support extensions higher than v1.1.
-#ifdef _WIN32
-PFNGLGENBUFFERSARBPROC            pglGenBuffersARB = 0;             // VBO Name Generation Procedure
-PFNGLBINDBUFFERARBPROC            pglBindBufferARB = 0;             // VBO Bind Procedure
-PFNGLBUFFERDATAARBPROC            pglBufferDataARB = 0;             // VBO Data Loading Procedure
-PFNGLBUFFERSUBDATAARBPROC         pglBufferSubDataARB = 0;          // VBO Sub Data Loading Procedure
-PFNGLDELETEBUFFERSARBPROC         pglDeleteBuffersARB = 0;          // VBO Deletion Procedure
-PFNGLGETBUFFERPARAMETERIVARBPROC  pglGetBufferParameterivARB = 0;   // return various parameters of VBO
-PFNGLMAPBUFFERARBPROC             pglMapBufferARB = 0;              // map VBO procedure
-PFNGLUNMAPBUFFERARBPROC           pglUnmapBufferARB = 0;            // unmap VBO procedure
-
-#define glGenBuffersARB           pglGenBuffersARB
-#define glBindBufferARB           pglBindBufferARB
-#define glBufferDataARB           pglBufferDataARB
-#define glBufferSubDataARB        pglBufferSubDataARB
-#define glDeleteBuffersARB        pglDeleteBuffersARB
-#define glGetBufferParameterivARB pglGetBufferParameterivARB
-#define glMapBufferARB            pglMapBufferARB
-#define glUnmapBufferARB          pglUnmapBufferARB
-#endif
 int main(int argc, char **argv)
 {
 
@@ -421,42 +385,14 @@ int main(int argc, char **argv)
     }
     std::cout<<"Load Mesh : "<<argv[1]<<"\n";
     std::cout<<"Voxel resolution : "<<argv[2]<<"\n";
-   initSharedMem();
+    initSharedMem();
     // init GLUT and GL
     initGLUT(argc, argv);
     initGL();
     // register exit callback
     atexit(exitCB);
-#ifdef _WIN32
-    // get pointers to GL functions
-    glGenBuffersARB = (PFNGLGENBUFFERSARBPROC)wglGetProcAddress("glGenBuffersARB");
-    glBindBufferARB = (PFNGLBINDBUFFERARBPROC)wglGetProcAddress("glBindBufferARB");
-    glBufferDataARB = (PFNGLBUFFERDATAARBPROC)wglGetProcAddress("glBufferDataARB");
-    glBufferSubDataARB = (PFNGLBUFFERSUBDATAARBPROC)wglGetProcAddress("glBufferSubDataARB");
-    glDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC)wglGetProcAddress("glDeleteBuffersARB");
-    glGetBufferParameterivARB = (PFNGLGETBUFFERPARAMETERIVARBPROC)wglGetProcAddress("glGetBufferParameterivARB");
-    glMapBufferARB = (PFNGLMAPBUFFERARBPROC)wglGetProcAddress("glMapBufferARB");
-    glUnmapBufferARB = (PFNGLUNMAPBUFFERARBPROC)wglGetProcAddress("glUnmapBufferARB");
-#else 
-#endif
-
 
     int bufferSize;
-    // create vertex buffer objects, you need to delete them when program exits
-    // Try to put both vertex coords array, vertex normal array and vertex color in the same buffer object.
-    // glBufferDataARB with NULL pointer reserves only memory space.
-    // Copy actual data with 2 calls of glBufferSubDataARB, one for vertex coords and one for normals.
-    // target flag is GL_ARRAY_BUFFER_ARB, and usage flag is GL_STATIC_DRAW_ARB
-
-    //glGenBuffersARB(1, &vboId);
-    //glBindBufferARB(GL_ARRAY_BUFFER_ARB, vboId);
-    //glBufferDataARB(GL_ARRAY_BUFFER_ARB, sizeof(vertices)+sizeof(normals)+sizeof(colors), 0, GL_STATIC_DRAW_ARB);
-    //glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, sizeof(vertices), vertices);                             // copy vertices starting from 0 offest
-    //glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, sizeof(vertices), sizeof(normals), normals);                // copy normals after vertices
-
-    // the last GLUT call (LOOP)
-    // window will be shown and display callback is triggered by events
-    // NOTE: this call never return main().
     voxelRes = atoi(argv[3]);
     voxelizer(argv[1], argv[2], voxelRes);
     glutMainLoop(); /* Start GLUT event-processing loop */
@@ -470,11 +406,8 @@ int initGLUT(int argc, char **argv)
 {
 
     // GLUT stuff for windowing
-    // initialization openGL window.
-    // it is called before any other GLUT routine
     glutInit(&argc, argv);
-    //glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL);   // display mode
-    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_STENCIL);   // display mode
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL);   // display mode
     glutInitWindowSize(screenWidth, screenHeight);  // window size
     glutInitWindowPosition(100, 100);               // window location
     // finally, create a window with openGL context
@@ -501,17 +434,9 @@ void initGL()
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);      // 4-byte pixel alignment
     // enable /disable features
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-    glDisable(GL_DEPTH_TEST);
-    //glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_LIGHTING);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_TEXTURE_2D);
-    //glEnable(GL_TEXTURE_2D);
-    glDisable(GL_CULL_FACE);
-    //glEnable(GL_CULL_FACE);
-     // track material ambient and diffuse from surface color, call it before glEnable(GL_COLOR_MATERIAL)
-    //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-    //glEnable(GL_COLOR_MATERIAL);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_CULL_FACE);
     glClearColor(0, 0, 0, 0);                   // background color
     glClearStencil(0);                          // clear stencil buffer
     glClearDepth(1.0f);                         // 0 is near, 1 is far
@@ -540,7 +465,7 @@ bool initSharedMem()
 void clearSharedMem()
 {
     deleteVBO(vbo_vertices);
-    //deleteVBO(vbo_normals);
+    deleteVBO(vbo_normals);
     deleteVBO(ibo_elements);
 }
 
@@ -640,34 +565,25 @@ void displayCB()
     glTranslatef(0, 0, -cameraDistance);
     glRotatef(cameraAngleX, 1, 0, 0);   // pitch
     glRotatef(cameraAngleY, 0, 1, 0);   // heading
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+    // Enable this for mesh drawing
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    //Set vertex data
     glEnableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
     glVertexPointer(3, GL_FLOAT, 0, 0);
+
+    //Set normal data
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
+    glNormalPointer(GL_FLOAT, 0, 0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);
     glDrawElements(GL_TRIANGLES, triangles_size*3, GL_UNSIGNED_SHORT, 0);
 
     glDisableClientState(GL_VERTEX_ARRAY);
-
-    //glEnableVertexAttribArray(0);
-    //// Describe our vertices array to OpenGL (it can't guess its format automatically)
-    //glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
-    //glVertexAttribPointer(
-    //  0, // attribute
-    //  3,                 // number of elements per vertex, here (x,y,z)
-    //  GL_FLOAT,          // the type of each element
-    //  GL_FALSE,          // take our values as-is
-    //  0,                 // no extra data between each position
-    //  0                  // offset of first element
-    //);
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);
-    //int size;  
-    //glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
-    //glDrawElements(GL_TRIANGLES, size/sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
- 
-    //glDisableVertexAttribArray(0);
+    glDisableClientState(GL_NORMAL_ARRAY);
 
     glPopMatrix();
     glutSwapBuffers();
