@@ -167,7 +167,6 @@ bool loadMesh(char *filename, unsigned int dim)
     g_voxelGrid = new CompFab::VoxelGrid(bbMin-hspacing, dim, dim, dim, spacing);
 
     delete tempMesh;
-    
     return true;
    
 }
@@ -251,85 +250,48 @@ void triangulateVoxelGrid(const char * outfile)
         temp_vertices[vert*3] = p1;
         temp_vertices[vert*3 + 1] = p2;
         temp_vertices[vert*3 + 2] = p3;
+        cout << "Vertex " << vert << ": " << "(" << p1 << "," << p2 << "," << p3 << ")\n";
     }
     cout << "last element: " << temp_vertices[(vertices_size-1)*3+2] << " " << "\n";
 
-    glGenBuffersARB(1, &vbo_vertices);                        // create a vbo
-    glBindBufferARB(GL_ARRAY_BUFFER, vbo_vertices);                    // activate vbo id to use
-    glBufferDataARB(GL_ARRAY_BUFFER, vertices_size*3, temp_vertices, GL_STREAM_DRAW_ARB); // upload data to video card
+    glGenBuffers(1, &vbo_vertices);                        // create a vbo
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);                    // activate vbo id to use
+    glBufferData(GL_ARRAY_BUFFER, vertices_size*3*sizeof(GLfloat), temp_vertices, GL_STREAM_DRAW); // upload data to video card
 
-    GLfloat *temp_normals;
-    temp_normals = new GLfloat[(mout.n.size()*3)];
-    for(unsigned int norm =0; norm<mout.n.size(); ++norm)
-    {
-        p1 = (GLfloat) mout.v[norm][0];
-        p2 = (GLfloat) mout.v[norm][1];
-        p3 = (GLfloat) mout.v[norm][2];
-        temp_normals[norm*3] = p1;
-        temp_normals[norm*3 + 1] = p2;
-        temp_normals[norm*3 + 2] = p3;
-    }
-    glGenBuffersARB(1, &vbo_normals);                        // create a vbo
-    glBindBufferARB(GL_ARRAY_BUFFER, vbo_normals);                    // activate vbo id to use
-    glBufferDataARB(GL_ARRAY_BUFFER, vertices_size*3, temp_normals, GL_STREAM_DRAW_ARB); // upload data to video card
+    //GLfloat *temp_normals;
+    //temp_normals = new GLfloat[(mout.n.size()*3)];
+    //for(unsigned int norm =0; norm<mout.n.size(); ++norm)
+    //{
+    //    p1 = (GLfloat) mout.v[norm][0];
+    //    p2 = (GLfloat) mout.v[norm][1];
+    //    p3 = (GLfloat) mout.v[norm][2];
+    //    temp_normals[norm*3] = p1;
+    //    temp_normals[norm*3 + 1] = p2;
+    //    temp_normals[norm*3 + 2] = p3;
+    //}
+    //glGenBuffers(1, &vbo_normals);                        // create a vbo
+    //glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);                    // activate vbo id to use
+    //glBufferData(GL_ARRAY_BUFFER, vertices_size*3*sizeof(GLfloat), temp_normals, GL_STREAM_DRAW); // upload data to video card
 
-    GLuint *temp_elements;
-    temp_elements = new GLuint[(mout.t.size()*3)];
+    GLushort *temp_elements;
+    temp_elements = new GLushort[(mout.t.size()*3)];
+    //temp_elements[0] = 0;
+    //temp_elements[1] = 3;
+    //temp_elements[2] = 2;
     for(unsigned int tri =0; tri<mout.t.size(); ++tri)
     {
-        p1 = (GLuint) mout.t[tri][0]+1;
-        p2 = (GLuint) mout.t[tri][1]+1;
-        p3 = (GLuint) mout.t[tri][2]+1;
+        p1 = (GLuint) mout.t[tri][0];
+        p2 = (GLuint) mout.t[tri][1];
+        p3 = (GLuint) mout.t[tri][2];
         temp_elements[tri*3] = p1;
         temp_elements[tri*3 + 1] = p2;
         temp_elements[tri*3 + 2] = p3;
+        cout << "Triangle " << tri << ": " << "(" << p1 << "," << p2 << "," << p3 << ")\n";
 
     }
-    glGenBuffersARB(1, &ibo_elements);                        // create a vbo
-    glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);                    // activate vbo id to use
-    glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER, triangles_size, temp_elements, GL_STREAM_DRAW_ARB); // upload data to video card
-    // enable vertex arrays
-
-
-    //glGenBuffersARB(1, &vboId);
-    //glBindBufferARB(GL_ARRAY_BUFFER_ARB, vboId);
-    //glBufferDataARB(GL_ARRAY_BUFFER_ARB, 2*vertsize, 0, GL_STATIC_DRAW_ARB);
-    //glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, vertsize, temp_vertices);                             // copy vertices starting from 0 offest
-    //glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, vertsize, vertsize, temp_normals);                // copy normals after vertices
-
-    glEnableVertexAttribArray(0);
-    //// Describe our vertices array to OpenGL (it can't guess its format automatically)
-    //cout >> *vbo_vertices[0];
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
-    glVertexAttribPointer(
-      0, // attribute
-      3,                 // number of elements per vertex, here (x,y,z)
-      GL_FLOAT,          // the type of each element
-      GL_FALSE,          // take our values as-is
-      0,                 // no extra data between each position
-      0                  // offset of first element
-    );
-
-    glEnableVertexAttribArray(1);
-    //// Describe our vertices array to OpenGL (it can't guess its format automatically)
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
-    glVertexAttribPointer(
-      1, // attribute
-      3,                 // number of elements per vertex, here (x,y,z)
-      GL_FLOAT,          // the type of each element
-      GL_FALSE,          // take our values as-is
-      0,                 // no extra data between each position
-      0                  // offset of first element
-    );
-
-  /*// Push each element in buffer_vertices to the vertex shader */
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);
-    int size;  
-    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
-    glDrawElements(GL_TRIANGLES, size/sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
-
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
+    glGenBuffers(1, &ibo_elements);                        // create a vbo
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);                    // activate vbo id to use
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangles_size*3*sizeof(GLushort), temp_elements, GL_STREAM_DRAW); // upload data to video card
 }
 /*
   Voxelize input mesh, update voxel representation, update voxelized mesh representation 
@@ -398,7 +360,7 @@ bool initSharedMem();
 void clearSharedMem();
 void initLights();
 void setCamera(float posX, float posY, float posZ, float targetX, float targetY, float targetZ);
-GLuint createVBO(const void* data, int dataSize, GLenum target=GL_ARRAY_BUFFER_ARB, GLenum usage=GL_STATIC_DRAW_ARB);
+GLuint createVBO(const void* data, int dataSize, GLenum target=GL_ARRAY_BUFFER, GLenum usage=GL_STATIC_DRAW);
 void deleteVBO(const GLuint vboId);
 void toPerspective();
 
@@ -543,12 +505,13 @@ void initGL()
     //glEnable(GL_DEPTH_TEST);
     //glEnable(GL_LIGHTING);
     glDisable(GL_LIGHTING);
-    glEnable(GL_TEXTURE_2D);
+    glDisable(GL_TEXTURE_2D);
+    //glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
     //glEnable(GL_CULL_FACE);
      // track material ambient and diffuse from surface color, call it before glEnable(GL_COLOR_MATERIAL)
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-    glEnable(GL_COLOR_MATERIAL);
+    //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    //glEnable(GL_COLOR_MATERIAL);
     glClearColor(0, 0, 0, 0);                   // background color
     glClearStencil(0);                          // clear stencil buffer
     glClearDepth(1.0f);                         // 0 is near, 1 is far
@@ -577,7 +540,7 @@ bool initSharedMem()
 void clearSharedMem()
 {
     deleteVBO(vbo_vertices);
-    deleteVBO(vbo_normals);
+    //deleteVBO(vbo_normals);
     deleteVBO(ibo_elements);
 }
 
@@ -679,35 +642,17 @@ void displayCB()
     glRotatef(cameraAngleY, 0, 1, 0);   // heading
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    // bind VBOs with IDs and set the buffer offsets of the bound VBOs
-    // When buffer object is bound with its ID, all pointers in gl*Pointer()
-    // are treated as offset instead of real pointer.
-    // enable vertex arrays
-    glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
-    // before draw, specify vertex and index arrays with their offsets
-    glBindBufferARB(GL_ARRAY_BUFFER_ARB, vbo_vertices);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
     glVertexPointer(3, GL_FLOAT, 0, 0);
-    glBindBufferARB(GL_ARRAY_BUFFER_ARB, vbo_normals);
-    glNormalPointer(GL_FLOAT, 0, 0);
-    //glNormalPointer(GL_FLOAT, 0, (void*)sizeof(vertices));
 
-    int size;
-    glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, ibo_elements);
-    glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
-    glDrawElements(GL_TRIANGLES, size/sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);
+    glDrawElements(GL_TRIANGLES, triangles_size*3, GL_UNSIGNED_SHORT, 0);
 
-   // glDrawArrays(GL_TRIANGLES, 0, vertices_size);
-    glDisableClientState(GL_VERTEX_ARRAY);  // disable vertex arrays
-    glDisableClientState(GL_NORMAL_ARRAY);
-    // it is good idea to release VBOs with ID 0 after use.
-    // Once bound with 0, all pointers in gl*Pointer() behave as real
-    // pointer, so, normal vertex array operations are re-activated
-    glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+    glDisableClientState(GL_VERTEX_ARRAY);
 
     //glEnableVertexAttribArray(0);
-    ////// Describe our vertices array to OpenGL (it can't guess its format automatically)
-    ////cout >> *vbo_vertices[0];
+    //// Describe our vertices array to OpenGL (it can't guess its format automatically)
     //glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
     //glVertexAttribPointer(
     //  0, // attribute
@@ -717,27 +662,12 @@ void displayCB()
     //  0,                 // no extra data between each position
     //  0                  // offset of first element
     //);
-
-    //glEnableVertexAttribArray(1);
-    ////// Describe our vertices array to OpenGL (it can't guess its format automatically)
-    //glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
-    //glVertexAttribPointer(
-    //  1, // attribute
-    //  3,                 // number of elements per vertex, here (x,y,z)
-    //  GL_FLOAT,          // the type of each element
-    //  GL_FALSE,          // take our values as-is
-    //  0,                 // no extra data between each position
-    //  0                  // offset of first element
-    //);
-
-  /*//// Push each element in buffer_vertices to the vertex shader */
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);
     //int size;  
     //glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &size);
     //glDrawElements(GL_TRIANGLES, size/sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
-
+ 
     //glDisableVertexAttribArray(0);
-    //glDisableVertexAttribArray(1);
 
     glPopMatrix();
     glutSwapBuffers();
