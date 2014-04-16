@@ -12,26 +12,18 @@
 #include "../include/Mesh.h"
 #include "../include/vecmath/vecmath.h"
 #include "../include/glext.h"
+#include "../include/interface.h"
 using namespace std;
 using std::stringstream;
 using std::cout;
 using std::endl;
 using std::ends;
 
-///////////////
-// CONSTANTS //
-///////////////
-// GLUT
-const int   SCREEN_WIDTH    = 400;
-const int   SCREEN_HEIGHT   = 300;
-const float CAMERA_DISTANCE = 5.0f;
-
-
 /////////////
 // GLOBALS //
 /////////////
-// Voxelized Lamp Mesh 
 
+// Voxelized Lamp Mesh Data
 GLfloat *lamp_vertices;
 GLfloat *lamp_normals;
 GLushort *lamp_triangles;
@@ -43,27 +35,13 @@ GLuint ibo_elements;
 unsigned int vertices_size;
 unsigned int triangles_size;
 
-// Used by voxelizer code from assn 0;
+// Voxel Lamp Representation for 3d printing 
+CompFab::VoxelGrid *g_voxelGrid;
+
+// Used by voxelizer from assn 0;
 typedef std::vector<CompFab::Triangle> TriangleList;
 TriangleList g_voxelTriangles;
-CompFab::VoxelGrid *g_voxelGrid;
 unsigned int voxelRes;
-
-// GLUT 
-float lightposx = 0.0f;
-float lightposy = 0.0f;
-float roomDim = 50.0f;
-
-// global variables
-void *font = GLUT_BITMAP_8_BY_13;
-int screenWidth;
-int screenHeight;
-bool mouseLeftDown;
-bool mouseRightDown;
-float mouseX, mouseY;
-float cameraAngleX;
-float cameraAngleY;
-float cameraDistance;
 
 double detMat(double A11, double A12, double A13,
               double A21, double A22, double A23,
@@ -72,9 +50,11 @@ double detMat(double A11, double A12, double A13,
     return A11*(A22*A33 - A23*A32) - A12*(A21*A33 - A23*A31) + A13*(A21*A32 - A22*A31);
 }
 
+
 ////////////////
 // INITIALIZE //
 ////////////////
+
 /*
   Ray-Triangle Intersection
   @returns 1 if triangle and ray intersect, 0 otherwise
@@ -343,7 +323,6 @@ void voxelizer(char* filename, char* outfilename, unsigned int voxelres)
     triangulateVoxelGrid(outfilename);
 }
 
-
 /*
   Create the Scene Data
   @set roomMesh
@@ -355,206 +334,14 @@ void createSceneData(){
 
 }
 
-////////////////
-// RENDERING ///
-////////////////
-// GLUT CALLBACK functions
-void displayCB();
-void reshapeCB(int w, int h);
-void timerCB(int millisec);
-void mouseCB(int button, int stat, int x, int y);
-void mouseMotionCB(int x, int y);
-// CALLBACK function when exit() called //
-void exitCB();
-void initGL();
-int  initGLUT(int argc, char **argv);
-bool initSharedMem();
-void clearSharedMem();
-void initLights();
-void setCamera(float posX, float posY, float posZ, float targetX, float targetY, float targetZ);
-GLuint createVBO(const void* data, int dataSize, GLenum target=GL_ARRAY_BUFFER, GLenum usage=GL_STATIC_DRAW);
-void deleteVBO(const GLuint vboId);
-void toPerspective();
-int main(int argc, char **argv)
-{
+///////////////
+// RENDERING //
+///////////////
+// REST OF RENDER CODE IS IN interface.cpp AND interface.h //
 
-    if(argc < 4)
-    {
-        std::cout<<"Usage: Voxelizer InputMeshFilename OutputMeshFilename voxelRes\n";
-        exit(0);
-    }
-    std::cout<<"Load Mesh : "<<argv[1]<<"\n";
-    std::cout<<"Voxel resolution : "<<argv[2]<<"\n";
-    initSharedMem();
-    // init GLUT and GL
-    initGLUT(argc, argv);
-    initGL();
-    // register exit callback
-    atexit(exitCB);
-
-    int bufferSize;
-    voxelRes = atoi(argv[3]);
-    voxelizer(argv[1], argv[2], voxelRes);
-    glutMainLoop(); /* Start GLUT event-processing loop */
-    return 0;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// initialize GLUT for windowing
-///////////////////////////////////////////////////////////////////////////////
-int initGLUT(int argc, char **argv)
-{
-
-    // GLUT stuff for windowing
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL);   // display mode
-    glutInitWindowSize(screenWidth, screenHeight);  // window size
-    glutInitWindowPosition(100, 100);               // window location
-    // finally, create a window with openGL context
-    // Window will not displayed until glutMainLoop() is called
-    // it returns a unique ID
-    int handle = glutCreateWindow(argv[0]);         // param is the title of window
-    // register GLUT callback functions
-    glutDisplayFunc(displayCB);
-    glutTimerFunc(33, timerCB, 33);                 // redraw only every given millisec
-    glutReshapeFunc(reshapeCB);
-    glutMouseFunc(mouseCB);
-    glutMotionFunc(mouseMotionCB);
-    return handle;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// initialize OpenGL
-// disable unused features
-///////////////////////////////////////////////////////////////////////////////
-void initGL()
-{
-
-    glShadeModel(GL_SMOOTH);                    // shading mathod: GL_SMOOTH or GL_FLAT
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);      // 4-byte pixel alignment
-    // enable /disable features
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_CULL_FACE);
-    glClearColor(0, 0, 0, 0);                   // background color
-    glClearStencil(0);                          // clear stencil buffer
-    glClearDepth(1.0f);                         // 0 is near, 1 is far
-    glDepthFunc(GL_LEQUAL);
-    initLights();
-    setCamera(0, 0, -20, 1.0624, 1.0625, 1.0625);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// initialize global variables
-///////////////////////////////////////////////////////////////////////////////
-bool initSharedMem()
-{
-    screenWidth = SCREEN_WIDTH;
-    screenHeight = SCREEN_HEIGHT;
-    mouseLeftDown = mouseRightDown = false;
-    mouseX = mouseY = 0;
-    cameraAngleX = cameraAngleY = 0.0f;
-    cameraDistance = CAMERA_DISTANCE;
-    return true;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// clean up global vars
-///////////////////////////////////////////////////////////////////////////////
-void clearSharedMem()
-{
-    deleteVBO(vbo_vertices);
-    deleteVBO(vbo_normals);
-    deleteVBO(ibo_elements);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// initialize lights
-///////////////////////////////////////////////////////////////////////////////
-void initLights()
-{
-    // set up light colors (ambient, diffuse, specular)
-    GLfloat lightKa[] = {.2f, .2f, .2f, 1.0f};  // ambient light
-    GLfloat lightKd[] = {.7f, .7f, .7f, 1.0f};  // diffuse light
-    GLfloat lightKs[] = {1, 1, 1, 1};           // specular light
-    glLightfv(GL_LIGHT0, GL_AMBIENT, lightKa);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightKd);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightKs);
-    // position the light
-    float lightPos[4] = {0, 10, 0, 1}; // positional light
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
-    glEnable(GL_LIGHT0);                        // MUST enable each light source after configuration
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// set camera position and lookat direction
-///////////////////////////////////////////////////////////////////////////////
-void setCamera(float posX, float posY, float posZ, float targetX, float targetY, float targetZ)
-{
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    gluLookAt(posX, posY, posZ, targetX, targetY, targetZ, 0, 1, 0); // eye(x,y,z), focal(x,y,z), up(x,y,z)
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// generate vertex buffer object and bind it with its data
-// You must give 2 hints about data usage; target and mode, so that OpenGL can
-// decide which data should be stored and its location.
-// VBO works with 2 different targets; GL_ARRAY_BUFFER_ARB for vertex arrays
-// and GL_ELEMENT_ARRAY_BUFFER_ARB for index array in glDrawElements().
-// The default target is GL_ARRAY_BUFFER_ARB.
-// By default, usage mode is set as GL_STATIC_DRAW_ARB.
-// Other usages are GL_STREAM_DRAW_ARB, GL_STREAM_READ_ARB, GL_STREAM_COPY_ARB,
-// GL_STATIC_DRAW_ARB, GL_STATIC_READ_ARB, GL_STATIC_COPY_ARB,
-// GL_DYNAMIC_DRAW_ARB, GL_DYNAMIC_READ_ARB, GL_DYNAMIC_COPY_ARB.
-///////////////////////////////////////////////////////////////////////////////
-GLuint createVBO(const void* data, int dataSize, GLenum target, GLenum usage)
-{
-    GLuint id = 0;  // 0 is reserved, glGenBuffersARB() will return non-zero id if success
-    glGenBuffersARB(1, &id);                        // create a vbo
-    glBindBufferARB(target, id);                    // activate vbo id to use
-    glBufferDataARB(target, dataSize, data, usage); // upload data to video card
-    // check data size in VBO is same as input array, if not return 0 and delete VBO
-    int bufferSize = 0;
-    glGetBufferParameterivARB(target, GL_BUFFER_SIZE_ARB, &bufferSize);
-    if(dataSize != bufferSize)
-    {
-        glDeleteBuffersARB(1, &id);
-        id = 0;
-        std::cout << "[createVBO()] Data size is mismatch with input array\n";
-    }
-    return id;      // return VBO id
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// d1.0estroy a VBO
-// If VBO id is not valid or zero, then OpenGL ignores it silently.
-///////////////////////////////////////////////////////////////////////////////
-void deleteVBO(const GLuint vboId)
-{
-    glDeleteBuffersARB(1, &vboId);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// set the projection matrix as perspective
-///////////////////////////////////////////////////////////////////////////////
-void toPerspective()
-{
-    // set viewport to be the entire window
-    glViewport(0, 0, (GLsizei)screenWidth, (GLsizei)screenHeight);
-    // set perspective viewing frustum
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(50.0f, (float)(screenWidth)/screenHeight, 1.0f, 100.0f); // FOV, AspectRatio, NearClip, FarClip
-    // switch to modelview matrix in order to set scene
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-}
-
-//=============================================================================
-// CALLBACKS
-//=============================================================================
+/* 
+  Callback that actually draws the mesh data 
+*/
 void displayCB()
 {
     // clear buffer
@@ -589,60 +376,31 @@ void displayCB()
     glutSwapBuffers();
 }
 
-void reshapeCB(int w, int h)
+
+//////////
+// MAIN //
+//////////
+int main(int argc, char **argv)
 {
-    screenWidth = w;
-    screenHeight = h;
-    toPerspective();
+
+    if(argc < 4)
+    {
+        std::cout<<"Usage: Voxelizer InputMeshFilename OutputMeshFilename voxelRes\n";
+        exit(0);
+    }
+    std::cout<<"Load Mesh : "<<argv[1]<<"\n";
+    std::cout<<"Voxel resolution : "<<argv[2]<<"\n";
+    initSharedMem();
+    // init GLUT and GL
+    initGLUT(argc, argv);
+    initGL();
+    // register exit callback
+    atexit(exitCB);
+
+    int bufferSize;
+    voxelRes = atoi(argv[3]);
+    voxelizer(argv[1], argv[2], voxelRes);
+    glutMainLoop(); /* Start GLUT event-processing loop */
+    return 0;
 }
 
-void timerCB(int millisec)
-{
-    glutTimerFunc(millisec, timerCB, millisec);
-    glutPostRedisplay();
-}
-
-void mouseCB(int button, int state, int x, int y)
-{
-    mouseX = x;
-    mouseY = y;
-    if(button == GLUT_LEFT_BUTTON)
-    {
-        if(state == GLUT_DOWN)
-        {
-            mouseLeftDown = true;
-        }
-        else if(state == GLUT_UP)
-            mouseLeftDown = false;
-    }
-    else if(button == GLUT_RIGHT_BUTTON)
-    {
-        if(state == GLUT_DOWN)
-        {
-            mouseRightDown = true;
-        }
-        else if(state == GLUT_UP)
-            mouseRightDown = false;
-    }
-}
-
-void mouseMotionCB(int x, int y)
-{
-    if(mouseLeftDown)
-    {
-        cameraAngleY += (x - mouseX);
-        cameraAngleX += (y - mouseY);
-        mouseX = x;
-        mouseY = y;
-    }
-    if(mouseRightDown)
-    {
-        cameraDistance -= (y - mouseY) * 0.2f;
-        mouseY = y;
-    }
-}
-
-void exitCB()
-{
-    clearSharedMem();
-}
