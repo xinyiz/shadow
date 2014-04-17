@@ -39,6 +39,7 @@ float lamp_ypos;
 // Position of the lamp (center) in the space
 float light_xpos;
 float light_ypos;
+float light_zpos;
 // Unit Cube Room ///////////////////////////////////////////////////////////////////////
 // Back corner assumed to be at 0,0,0
 //    Y
@@ -54,9 +55,12 @@ float light_ypos;
 //  /
 // /
 // Z
+float room_dim;
 GLuint room_vbo;
-GLfloat room_vertices[]  = { 1, 1, 1,   0, 1, 1,   0, 0, 1,      // v0-v1-v2 (front)
-                             0, 0, 1,   1, 0, 1,   1, 1, 1,      // v2-v3-v0
+
+GLfloat room_vertices[]  = { 
+  //1, 1, 1,   0, 1, 1,   0, 0, 1,      // v0-v1-v2 (front)
+  //0, 0, 1,   1, 0, 1,   1, 1, 1,      // v2-v3-v0
                              1, 1, 1,   1, 0, 1,   1, 0, 0,      // v0-v3-v4 (right)
                              1, 0, 0,   1, 1, 0,   1, 1, 1,      // v4-v5-v0
                              1, 1, 1,   1, 1, 0,   0, 1, 0,      // v0-v5-v6 (top)
@@ -68,8 +72,9 @@ GLfloat room_vertices[]  = { 1, 1, 1,   0, 1, 1,   0, 0, 1,      // v0-v1-v2 (fr
                              1, 0, 0,   0, 0, 0,   0, 1, 0,      // v4-v7-v6 (back)
                              0, 1, 0,   1, 1, 0,   1, 0, 0 };    // v6-v5-v4
 // normal array
-GLfloat room_normals[]   = { 0, 0, 1,   0, 0, 1,   0, 0, 1,      // v0-v1-v2 (front)
-                             0, 0, 1,   0, 0, 1,   0, 0, 1,      // v2-v3-v0
+GLfloat room_normals[]   = { 
+//0, 0, 1,   0, 0, 1,   0, 0, 1,      // v0-v1-v2 (front)
+//0, 0, 1,   0, 0, 1,   0, 0, 1,      // v2-v3-v0
                              1, 0, 0,   1, 0, 0,   1, 0, 0,      // v0-v3-v4 (right)
                              1, 0, 0,   1, 0, 0,   1, 0, 0,      // v4-v5-v0
                              0, 1, 0,   0, 1, 0,   0, 1, 0,      // v0-v5-v6 (top)
@@ -81,9 +86,19 @@ GLfloat room_normals[]   = { 0, 0, 1,   0, 0, 1,   0, 0, 1,      // v0-v1-v2 (fr
                              0, 0,-1,   0, 0,-1,   0, 0,-1,      // v4-v7-v6 (back)
                              0, 0,-1,   0, 0,-1,   0, 0,-1 };    // v6-v5-v4
 
-// Dimension of the room;
-float room_dim;
 
+//GLfloat room_normals[]   = { 0, 0, -1,   0, 0, -1,   0, 0, -1,      // v0-v-1-v1 (front)
+//                             0, 0, -1,   0, 0, -1,   0, 0, -1,      // v1-v3-v0
+//                             -1, 0, 0,   -1, 0, 0,   -1, 0, 0,      // v0-v3-v4 (right)
+//                             -1, 0, 0,   -1, 0, 0,   -1, 0, 0,      // v4-v5-v0
+//                             0, -1, 0,   0, -1, 0,   0, -1, 0,      // v0-v5-v6 (top)
+//                             0, -1, 0,   0, -1, 0,   0, -1, 0,      // v6-v-1-v0
+//                            1, 0, 0,  1, 0, 0,  1, 0, 0,      // v-1-v6-v7 (left)
+//                            1, 0, 0,  1, 0, 0,  1, 0, 0,      // v7-v1-v-1
+//                             0,1, 0,   0,1, 0,   0,1, 0,      // v7-v4-v3 (bottom)
+//                             0,1, 0,   0,1, 0,   0,1, 0,      // v3-v1-v7
+//                             0, 0,1,   0, 0,1,   0, 0,1,      // v4-v7-v6 (back)
+//                             0, 0,1,   0, 0,1,   0, 0,1 };    // v6-v5-v4
 
 unsigned int vertices_size;
 unsigned int triangles_size;
@@ -382,9 +397,10 @@ void voxelizer(char* filename, char* outfilename, unsigned int voxelres)
   @set light_xpos, light_ypos
 TODO:
 */
-void createSceneData(float roomDim, float lightXPos, float lightYPos){ 
+void createSceneData(float roomDim, float lightXPos, float lightYPos, float lightZPos){ 
     light_xpos = lightXPos;
     light_ypos = lightYPos;
+    light_zpos = lightZPos;
     room_dim = roomDim;
     glGenBuffers(1, &room_vbo);         
     glBindBuffer(GL_ARRAY_BUFFER, room_vbo);
@@ -405,10 +421,11 @@ void displayCB()
 {
     // clear buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    setCamera(room_dim*0.5f, room_dim*0.5f, room_dim, room_dim*0.5f, room_dim*0.5f,  room_dim*0.5f);
     // save the initial ModelView matrix before modifying ModelView matrix
     glPushMatrix();
     // tramsform camera
-    glTranslatef(0, 0, -cameraDistance);
+    glTranslatef(0, 0, cameraDistance);
     glRotatef(cameraAngleX, 1, 0, 0);   // pitch
     glRotatef(cameraAngleY, 0, 1, 0);   // heading
 
@@ -433,6 +450,7 @@ void displayCB()
     glBindBuffer(GL_ARRAY_BUFFER, room_vbo);
     glNormalPointer(GL_FLOAT, 0, (void*)sizeof(room_vertices));
     glVertexPointer(3, GL_FLOAT, 0, 0);
+    glScalef(room_dim,room_dim,room_dim);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glDisableClientState(GL_VERTEX_ARRAY);
@@ -449,13 +467,15 @@ void displayCB()
 int main(int argc, char **argv)
 {
 
-    if(argc < 7)
+    if(argc < 8)
     {
-        std::cout<<"Usage: Voxelizer InputMeshFilename OutputMeshFilename voxelRes roomDim lightX lightY\n";
+        std::cout<<"Usage: Voxelizer InputMeshFilename OutputMeshFilename voxelRes roomDim lightX lightY lightZ\n";
         exit(0);
     }
     std::cout<<"Load Mesh : "<<argv[1]<<"\n";
-    std::cout<<"Voxel resolution : "<<argv[2]<<"\n";
+    std::cout<<"Voxel resolution : "<<argv[3]<<"\n";
+    std::cout<<"Room dimensions: "<<argv[4]<<"\n";
+    std::cout<<"Light position: "<< argv[5] << "," << argv[6] << "," << argv[7] <<"\n";
     initSharedMem();
     // init GLUT and GL
     initGLUT(argc, argv);
@@ -469,7 +489,7 @@ int main(int argc, char **argv)
     // Initialize the lamp mesh
     voxelizer(argv[1], argv[2], voxelRes);
     // Initialize the other scene data
-    createSceneData(atof(argv[3]), atof(argv[4]), atof(argv[5]));
+    createSceneData(atof(argv[4]), atof(argv[5]), atof(argv[6]), atof(argv[7]));
 
     glutMainLoop(); /* Start GLUT event-processing loop */
     return 0;

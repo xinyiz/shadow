@@ -19,7 +19,7 @@ bool initSharedMem()
     mouseLeftDown = mouseRightDown = false;
     mouseX = mouseY = 0;
     cameraAngleX = cameraAngleY = 0.0f;
-    cameraDistance = CAMERA_DISTANCE;
+    cameraDistance = room_dim;
     return true;
 }
 
@@ -36,7 +36,7 @@ void initLights()
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightKd);
     glLightfv(GL_LIGHT0, GL_SPECULAR, lightKs);
     // position the light
-    float lightPos[4] = {0, 10, 0, 1}; // positional light
+    float lightPos[4] = {light_xpos, light_ypos, light_zpos, 1}; // positional light
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
     glEnable(GL_LIGHT0);                        // MUST enable each light source after configuration
 }
@@ -61,7 +61,7 @@ void toPerspective()
     // set perspective viewing frustum
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(50.0f, (float)(screenWidth)/screenHeight, 1.0f, 100.0f); // FOV, AspectRatio, NearClip, FarClip
+    gluPerspective(60.0f, (float)(screenWidth)/screenHeight, 1.0f, 100.0f); // FOV, AspectRatio, NearClip, FarClip
     // switch to modelview matrix in order to set scene
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -104,13 +104,18 @@ void initGL()
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
+    glEnable(GL_NORMALIZE);
     glEnable(GL_CULL_FACE);
+
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    glEnable(GL_COLOR_MATERIAL);
+
+
     glClearColor(0, 0, 0, 0);                   // background color
     glClearStencil(0);                          // clear stencil buffer
     glClearDepth(1.0f);                         // 0 is near, 1 is far
     glDepthFunc(GL_LEQUAL);
     initLights();
-    setCamera(0, 0, -20, 1.0624, 1.0625, 1.0625);
 }
 
 //=============================================================================

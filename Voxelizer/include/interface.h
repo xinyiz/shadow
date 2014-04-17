@@ -8,16 +8,28 @@
 ///////////////
 const int   SCREEN_WIDTH    = 400;
 const int   SCREEN_HEIGHT   = 300;
-const float CAMERA_DISTANCE = 5.0f;
 
 /////////////
 // GLOBALS //
 /////////////
 
-// Lamp Mesh Data 
+// Lamp mesh data 
 extern GLuint vbo_vertices;
 extern GLuint vbo_normals;
 extern GLuint ibo_elements;
+
+// Lamp placement
+extern float lamp_xpos;
+extern float lamp_ypos;
+
+// Cubic room data
+extern GLuint room_vbo;
+extern float room_dim;
+
+// Light placement
+extern float light_xpos;
+extern float light_ypos;
+extern float light_zpos;
 
 // Interface parameters
 extern int screenWidth;
