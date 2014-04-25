@@ -402,6 +402,7 @@ void displayCB()
     // clear buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     setCamera(room_dim*0.5f, room_dim*0.7f, room_dim*2.0f, room_dim*0.5f, room_dim*0.5f,  room_dim*0.5f);
+    initLights();
     // save the initial ModelView matrix before modifying ModelView matrix
     glPushMatrix();
     // tramsform camera

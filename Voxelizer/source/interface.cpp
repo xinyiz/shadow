@@ -19,7 +19,7 @@ bool initSharedMem()
     mouseLeftDown = mouseRightDown = false;
     mouseX = mouseY = 0;
     cameraAngleX = cameraAngleY = 0.0f;
-    cameraDistance = room_dim;
+    cameraDistance = room_dim*2.0f;
     return true;
 }
 
@@ -29,10 +29,9 @@ bool initSharedMem()
 void initLights()
 {
     // set up light colors (ambient, diffuse, specular)
-    GLfloat lightKa[] = {.2f, .2f, .2f, 1.0f};  // ambient light
-    GLfloat lightKd[] = {.7f, .7f, .7f, 1.0f};  // diffuse light
+    GLfloat lightKd[] = {0.2f, 0.6f, .9f, 1.0f};  // diffuse light
     GLfloat lightKs[] = {1, 1, 1, 1};           // specular light
-    glLightfv(GL_LIGHT0, GL_AMBIENT, lightKa);
+    //glLightfv(GL_LIGHT0, GL_AMBIENT, lightKa);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightKd);
     glLightfv(GL_LIGHT0, GL_SPECULAR, lightKs);
     // position the light

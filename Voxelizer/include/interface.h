@@ -6,8 +6,8 @@
 ///////////////
 // CONSTANTS //
 ///////////////
-const int   SCREEN_WIDTH    = 400;
-const int   SCREEN_HEIGHT   = 300;
+const int   SCREEN_WIDTH    = 500;
+const int   SCREEN_HEIGHT   = 500;
 
 /////////////
 // GLOBALS //
