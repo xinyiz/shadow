@@ -405,7 +405,6 @@ void displayCB()
     setCamera(room_dim*0.5f, room_dim*0.7f, room_dim*2.0f, room_dim*0.5f, room_dim*0.5f,  room_dim*0.5f);
     // save the initial ModelView matrix before modifying ModelView matrix
     glPushMatrix();
-    initLights();
     // tramsform camera
     glTranslatef(0, 0, cameraDistance);
     glRotatef(cameraAngleX, 1, 0, 0);   // pitch
@@ -414,6 +413,7 @@ void displayCB()
     // Enable this for mesh drawing
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+    initLights();
     // Draw the lamp////////////////////////////////////////////////////////////
     // Set vertex data
     glEnableClientState(GL_VERTEX_ARRAY);
