@@ -1,6 +1,7 @@
 //Computational Fabrication Assignment #1
 // By David Levin 2014
 #define GL_GLEXT_PROTOTYPES
+
 #include <GL/glut.h>
 #include <cmath>
 #include <cstdlib>
@@ -18,6 +19,8 @@ using std::stringstream;
 using std::cout;
 using std::endl;
 using std::ends;
+
+#define WALL_THICKNESS		0.05f
 
 /////////////
 // GLOBALS //
@@ -40,53 +43,9 @@ float lamp_ypos;
 float light_xpos;
 float light_ypos;
 float light_zpos;
-// Unit Cube Room ///////////////////////////////////////////////////////////////////////
-// Back corner assumed to be at 0,0,0
-//    Y
-//    |
-//    |
-//    v6----- v5
-//   /|      /|
-//  v1------v0|
-//  | |     | |
-//  | |v7---|-|v4 ----X
-//  |/      |/
-//  v2------v3
-//  /
-// /
-// Z
+
+// Room dimension
 float room_dim;
-GLuint room_vbo;
-
-GLfloat room_vertices[]  = { 
-  //1, 1, 1,   0, 1, 1,   0, 0, 1,      // v0-v1-v2 (front)
-  //0, 0, 1,   1, 0, 1,   1, 1, 1,      // v2-v3-v0
-                             1, 1, 1,   1, 0, 1,   1, 0, 0,      // v0-v3-v4 (right)
-                             1, 0, 0,   1, 1, 0,   1, 1, 1,      // v4-v5-v0
-                             1, 1, 1,   1, 1, 0,   0, 1, 0,      // v0-v5-v6 (top)
-                             0, 1, 0,   0, 1, 1,   1, 1, 1,      // v6-v1-v0
-                             0, 1, 1,   0, 1, 0,   0, 0, 0,      // v1-v6-v7 (left)
-                             0, 0, 0,   0, 0, 1,   0, 1, 1,      // v7-v1-v1
-                             0, 0, 0,   1, 0, 0,   1, 0, 1,      // v7-v4-v3 (bottom)
-                             1, 0, 1,   0, 0, 1,   0, 0, 0,      // v3-v1-v7
-                             1, 0, 0,   0, 0, 0,   0, 1, 0,      // v4-v7-v6 (back)
-                             0, 1, 0,   1, 1, 0,   1, 0, 0 };    // v6-v5-v4
-// normal array
-GLfloat room_normals[]   = { 
-//0, 0, 1,   0, 0, 1,   0, 0, 1,      // v0-v1-v2 (front)
-//0, 0, 1,   0, 0, 1,   0, 0, 1,      // v2-v3-v0
-                             1, 0, 0,   1, 0, 0,   1, 0, 0,      // v0-v3-v4 (right)
-                             1, 0, 0,   1, 0, 0,   1, 0, 0,      // v4-v5-v0
-                             0, 1, 0,   0, 1, 0,   0, 1, 0,      // v0-v5-v6 (top)
-                             0, 1, 0,   0, 1, 0,   0, 1, 0,      // v6-v1-v0
-                            -1, 0, 0,  -1, 0, 0,  -1, 0, 0,      // v1-v6-v7 (left)
-                            -1, 0, 0,  -1, 0, 0,  -1, 0, 0,      // v7-v2-v1
-                             0,-1, 0,   0,-1, 0,   0,-1, 0,      // v7-v4-v3 (bottom)
-                             0,-1, 0,   0,-1, 0,   0,-1, 0,      // v3-v2-v7
-                             0, 0,-1,   0, 0,-1,   0, 0,-1,      // v4-v7-v6 (back)
-                             0, 0,-1,   0, 0,-1,   0, 0,-1 };    // v6-v5-v4
-
-
 unsigned int vertices_size;
 unsigned int triangles_size;
 
@@ -380,7 +339,6 @@ void voxelizer(char* filename, char* outfilename, unsigned int voxelres)
 
 /*
   Create the Scene Data apart from Lamp
-  @set room_normals, room_vertices
   @set light_xpos, light_ypos
 TODO:
 */
@@ -389,17 +347,52 @@ void createSceneData(float roomDim, float lightXPos, float lightYPos, float ligh
     light_ypos = lightYPos;
     light_zpos = lightZPos;
     room_dim = roomDim;
-    glGenBuffers(1, &room_vbo);         
-    glBindBuffer(GL_ARRAY_BUFFER, room_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(room_vertices)+sizeof(room_normals), 0, GL_STATIC_DRAW);
-    glBufferSubDataARB(GL_ARRAY_BUFFER, 0, sizeof(room_vertices), room_vertices); 
-    glBufferSubDataARB(GL_ARRAY_BUFFER, sizeof(room_vertices), sizeof(room_normals), room_normals);                // copy normals after vertices
 }
 
 ///////////////
 // RENDERING //
 ///////////////
 // REST OF RENDER CODE IS IN interface.cpp AND interface.h //
+/*
+  Draw room with one corner at (0,0,0)
+*/
+void room()
+{
+	/* ceiling */
+	glPushMatrix();
+	glTranslatef(room_dim/2,room_dim,room_dim/2);
+	glScalef(room_dim, WALL_THICKNESS, room_dim);
+	glutSolidCube( 1.0 );
+	glPopMatrix();
+	
+	/* floor */
+	glPushMatrix();
+	glTranslatef(room_dim/2,0,room_dim/2);
+	glScalef(room_dim, WALL_THICKNESS, room_dim);
+	glutSolidCube( 1.0 );
+	glPopMatrix();
+	
+	/* right wall */
+	glPushMatrix();
+	glTranslatef(room_dim,room_dim/2,room_dim/2);
+	glScalef(WALL_THICKNESS, room_dim, room_dim);
+	glutSolidCube( 1.0 );
+	glPopMatrix();
+	
+	/* left wall */
+	glPushMatrix();
+	glTranslatef(0,room_dim/2,room_dim/2);
+	glScalef(WALL_THICKNESS, room_dim, room_dim);
+	glutSolidCube( 1.0 );
+	glPopMatrix();
+	
+	/* back wall */
+	glPushMatrix();
+	glTranslatef(room_dim/2,room_dim/2,0);
+	glScalef(room_dim, room_dim, WALL_THICKNESS);
+	glutSolidCube( 1.0 );
+	glPopMatrix();
+}
 
 /* 
   Callback that actually draws the mesh data 
@@ -408,7 +401,7 @@ void displayCB()
 {
     // clear buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    setCamera(room_dim*0.5f, room_dim*0.5f, room_dim, room_dim*0.5f, room_dim*0.5f,  room_dim*0.5f);
+    setCamera(room_dim*0.5f, room_dim*0.7f, room_dim*2.0f, room_dim*0.5f, room_dim*0.5f,  room_dim*0.5f);
     // save the initial ModelView matrix before modifying ModelView matrix
     glPushMatrix();
     // tramsform camera
@@ -424,7 +417,7 @@ void displayCB()
     glEnableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
     glVertexPointer(3, GL_FLOAT, 0, 0);
-
+    
     // Set normal data
     glEnableClientState(GL_NORMAL_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
@@ -434,14 +427,7 @@ void displayCB()
     glDrawElements(GL_TRIANGLES, triangles_size*3, GL_UNSIGNED_SHORT, 0);
 
     // Draw the cubic room//////////////////////////////////////////////////////
-    glBindBuffer(GL_ARRAY_BUFFER, room_vbo);
-    glNormalPointer(GL_FLOAT, 0, (void*)sizeof(room_vertices));
-    glVertexPointer(3, GL_FLOAT, 0, 0);
-    glScalef(room_dim,room_dim,room_dim);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
+    room();
 
     glPopMatrix();
     glutSwapBuffers();
