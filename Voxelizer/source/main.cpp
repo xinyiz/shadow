@@ -354,8 +354,9 @@ void createSceneData(float roomDim, float lightXPos, float lightYPos, float ligh
 // RENDERING //
 ///////////////
 // REST OF RENDER CODE IS IN interface.cpp AND interface.h //
+
 /*
-  Draw room with one corner at (0,0,0)
+  Draw room centered at (0,0,0)
 */
 void room()
 {
@@ -434,7 +435,21 @@ void displayCB()
     glutSwapBuffers();
 }
 
-
+void displayDrawCB()
+{
+	glMatrixMode (GL_PROJECTION);
+	glLoadIdentity ();
+	glOrtho (0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1);
+	glMatrixMode (GL_MODELVIEW);
+	glDisable(GL_DEPTH_TEST);
+    //glClear(GL_COLOR_BUFFER_BIT);
+    
+	glBegin(GL_POINTS);
+	glVertex2f(drawX, drawY);
+	glEnd();
+	
+    glutSwapBuffers();
+}
 //////////
 // MAIN //
 //////////
@@ -452,8 +467,15 @@ int main(int argc, char **argv)
     std::cout<<"Light position: "<< argv[5] << "," << argv[6] << "," << argv[7] <<"\n";
     initSharedMem();
     // init GLUT and GL
-    initGLUT(argc, argv);
+    int mainWindow = initGLUT(argc, argv);
     initGL();
+
+    // init GLUT Draw window
+    int drawWindow = initGLUTDraw(argc, argv);
+    initGL();
+    
+    glutSetWindow(mainWindow);
+
     // register exit callback
     atexit(exitCB);
 

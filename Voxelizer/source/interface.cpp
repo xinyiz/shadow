@@ -5,9 +5,11 @@ int screenHeight;
 bool mouseLeftDown;
 bool mouseRightDown;
 float mouseX, mouseY;
+float drawX, drawY;
 float cameraAngleX;
 float cameraAngleY;
 float cameraDistance;
+std::vector<std::vector<int> > shadowPixels;
 
 ///////////////////////////////////////////////////////////////////////////////
 // initialize global variables
@@ -72,7 +74,6 @@ void toPerspective()
 ///////////////////////////////////////////////////////////////////////////////
 int initGLUT(int argc, char **argv)
 {
-
     // GLUT stuff for windowing
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL);   // display mode
@@ -82,15 +83,30 @@ int initGLUT(int argc, char **argv)
     // Window will not displayed until glutMainLoop() is called
     // it returns a unique ID
     int handle = glutCreateWindow(argv[0]);         // param is the title of window
+
     // register GLUT callback functions
     glutDisplayFunc(displayCB);
     glutTimerFunc(33, timerCB, 33);                 // redraw only every given millisec
     glutReshapeFunc(reshapeCB);
     glutMouseFunc(mouseCB);
     glutMotionFunc(mouseMotionCB);
+
     return handle;
 }
 
+int initGLUTDraw(int argc, char **argv)
+{
+	int drawHandle = glutCreateWindow("Draw Shadow");
+	glutSetWindow(drawHandle);
+	glutDisplayFunc(displayDrawCB); 
+	glutTimerFunc(33, timerCB, 33);
+	glutTimerFunc(300, timerDrawCB, 300);
+    glutReshapeFunc(reshapeCB);
+    glutMouseFunc(mouseDrawCB);
+    glutMotionFunc(mouseMotionCB);
+    
+    return drawHandle;
+}
 ///////////////////////////////////////////////////////////////////////////////
 // initialize OpenGL
 // disable unused features
@@ -127,6 +143,12 @@ void timerCB(int millisec)
     glutPostRedisplay();
 }
 
+void timerDrawCB(int millisec)
+{
+    glutTimerFunc(millisec, timerDrawCB, millisec);
+    // TODO: update lamp info with pixels added/removed
+}
+
 void reshapeCB(int w, int h)
 {
     screenWidth = w;
@@ -138,6 +160,32 @@ void mouseCB(int button, int state, int x, int y)
 {
     mouseX = x;
     mouseY = y;
+    if(button == GLUT_LEFT_BUTTON)
+    {
+        if(state == GLUT_DOWN)
+        {
+            mouseLeftDown = true;
+        }
+        else if(state == GLUT_UP)
+            mouseLeftDown = false;
+    }
+    else if(button == GLUT_RIGHT_BUTTON)
+    {
+        if(state == GLUT_DOWN)
+        {
+            mouseRightDown = true;
+        }
+        else if(state == GLUT_UP)
+            mouseRightDown = false;
+    }
+}
+
+void mouseDrawCB(int button, int state, int x, int y)
+{
+	std::cout << "(" << x << ", " << y <<")";
+    drawX = x;
+    drawY = y;
+    //shadowPixel[x][y] = 1;
     if(button == GLUT_LEFT_BUTTON)
     {
         if(state == GLUT_DOWN)

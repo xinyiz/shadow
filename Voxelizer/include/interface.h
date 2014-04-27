@@ -2,6 +2,9 @@
 #define _GLUT_INTERFACE
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glut.h>
+#include <cstdlib>
+#include <iostream>
+#include <vector>
 
 ///////////////
 // CONSTANTS //
@@ -31,12 +34,16 @@ extern float light_xpos;
 extern float light_ypos;
 extern float light_zpos;
 
+// Drawn shadow pixels
+extern std::vector<std::vector<int> > shadowPixels;
+
 // Interface parameters
 extern int screenWidth;
 extern int screenHeight;
 extern bool mouseLeftDown;
 extern bool mouseRightDown;
 extern float mouseX, mouseY;
+extern float drawX, drawY;
 extern float cameraAngleX;
 extern float cameraAngleY;
 extern float cameraDistance;
@@ -46,11 +53,15 @@ void initLights();
 void setCamera(float posX, float posY, float posZ, float targetX, float targetY, float targetZ);
 void toPerspective();
 void displayCB();
+void displayDrawCB();
 int  initGLUT(int argc, char **argv);
+int  initGLUTDraw(int argc, char **argv);
 void initGL();
 void timerCB(int millisec);
+void timerDrawCB(int millisec);
 void reshapeCB(int w, int h);
 void mouseCB(int button, int stat, int x, int y);
+void mouseDrawCB(int button, int stat, int x, int y);
 void mouseMotionCB(int x, int y);
 void deleteVBO(const GLuint vboId);
 void clearSharedMem();
