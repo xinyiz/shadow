@@ -46,7 +46,6 @@ float light_zpos;
 
 // Room dimension
 float room_dim;
-
 unsigned int vertices_size;
 unsigned int triangles_size;
 
@@ -196,7 +195,7 @@ void saveVoxelsToObj(const char * outfile)
                 if(!g_voxelGrid->isInside(ii,jj,kk)){
                   continue;
                 }
-                CompFab::Vec3 coord(0.5f + ((double)ii)*spacing, 0.5f + ((double)jj)*spacing, 0.5f+((double)kk)*spacing);
+                CompFab::Vec3 coord(((double)ii)*spacing, ((double)jj)*spacing, ((double)kk)*spacing);
                 CompFab::Vec3 box0 = coord - hspacing;
                 CompFab::Vec3 box1 = coord + hspacing;
                 makeCube(box, box0, box1);
@@ -231,7 +230,7 @@ void triangulateVoxelGrid(const char * outfile)
                 if(!g_voxelGrid->isInside(ii,jj,kk)){
                   continue;
                 }
-                CompFab::Vec3 coord(0.5f + ((double)ii)*spacing, 0.5f + ((double)jj)*spacing, 0.5f+((double)kk)*spacing);
+                CompFab::Vec3 coord(((double)ii)*spacing, ((double)jj)*spacing, ((double)kk)*spacing);
                 CompFab::Vec3 box0 = coord - hspacing;
                 CompFab::Vec3 box1 = coord + hspacing;
                 makeCube(box, box0, box1);
@@ -318,6 +317,7 @@ void voxelizer(char* filename, char* outfilename, unsigned int voxelres)
     int nz = g_voxelGrid->m_dimZ;
     double spacing = g_voxelGrid->m_spacing;
     CompFab::Vec3 left = g_voxelGrid->m_lowerLeft;
+    cout << "m_lowerleft" << left.m_x << "," << left.m_y << "," << left.m_z;
     
     CompFab::Vec3 hspacing(0.5*spacing, 0.5*spacing, 0.5*spacing);
     
@@ -362,35 +362,35 @@ void room()
 {
 	/* ceiling */
 	glPushMatrix();
-	glTranslatef(0,room_dim/2,0);
+	glTranslatef(room_dim/2,room_dim,room_dim/2);
 	glScalef(room_dim, WALL_THICKNESS, room_dim);
 	glutSolidCube( 1.0 );
 	glPopMatrix();
 	
 	/* floor */
 	glPushMatrix();
-	glTranslatef(0,-room_dim/2,0);
+	glTranslatef(room_dim/2,0,room_dim/2);
 	glScalef(room_dim, WALL_THICKNESS, room_dim);
 	glutSolidCube( 1.0 );
 	glPopMatrix();
 	
 	/* right wall */
 	glPushMatrix();
-	glTranslatef(room_dim/2,0,0);
+	glTranslatef(room_dim,room_dim/2,room_dim/2);
 	glScalef(WALL_THICKNESS, room_dim, room_dim);
 	glutSolidCube( 1.0 );
 	glPopMatrix();
 	
 	/* left wall */
 	glPushMatrix();
-	glTranslatef(-room_dim/2,0,0);
+	glTranslatef(0,room_dim/2,room_dim/2);
 	glScalef(WALL_THICKNESS, room_dim, room_dim);
 	glutSolidCube( 1.0 );
 	glPopMatrix();
 	
 	/* back wall */
 	glPushMatrix();
-	glTranslatef(0, 0, -room_dim/2);
+	glTranslatef(room_dim/2,room_dim/2,0);
 	glScalef(room_dim, room_dim, WALL_THICKNESS);
 	glutSolidCube( 1.0 );
 	glPopMatrix();
@@ -403,7 +403,7 @@ void displayCB()
 {
     // clear buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    setCamera(room_dim*0.5f, room_dim*0.5f, room_dim, room_dim*0.5f, room_dim*0.5f,  room_dim*0.5f);
+    setCamera(room_dim*0.5f, room_dim*0.7f, room_dim*2.0f, room_dim*0.5f, room_dim*0.5f,  room_dim*0.5f);
     // save the initial ModelView matrix before modifying ModelView matrix
     glPushMatrix();
     // tramsform camera
@@ -414,6 +414,7 @@ void displayCB()
     // Enable this for mesh drawing
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+    initLights();
     // Draw the lamp////////////////////////////////////////////////////////////
     // Set vertex data
     glEnableClientState(GL_VERTEX_ARRAY);
