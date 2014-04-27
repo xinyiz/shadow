@@ -4,12 +4,16 @@ int screenWidth;
 int screenHeight;
 bool mouseLeftDown;
 bool mouseRightDown;
+bool mouseDrawLeftDown;
+bool mouseDrawRightDown;
 float mouseX, mouseY;
 float drawX, drawY;
 float cameraAngleX;
 float cameraAngleY;
 float cameraDistance;
-std::vector<std::vector<int> > shadowPixels;
+int brushWidth;
+std::vector<List> shadowPixels;
+List currShadowPixels;
 
 ///////////////////////////////////////////////////////////////////////////////
 // initialize global variables
@@ -22,6 +26,7 @@ bool initSharedMem()
     mouseX = mouseY = 0;
     cameraAngleX = cameraAngleY = 0.0f;
     cameraDistance = room_dim;
+    brushWidth = BRUSH_WIDTH;
     return true;
 }
 
@@ -99,11 +104,10 @@ int initGLUTDraw(int argc, char **argv)
 	int drawHandle = glutCreateWindow("Draw Shadow");
 	glutSetWindow(drawHandle);
 	glutDisplayFunc(displayDrawCB); 
-	glutTimerFunc(33, timerCB, 33);
 	glutTimerFunc(300, timerDrawCB, 300);
-    glutReshapeFunc(reshapeCB);
-    glutMouseFunc(mouseDrawCB);
-    glutMotionFunc(mouseMotionCB);
+  glutReshapeFunc(reshapeCB);
+  glutMouseFunc(mouseDrawCB);
+  glutMotionFunc(mouseDrawMotionCB);
     
     return drawHandle;
 }
@@ -180,32 +184,6 @@ void mouseCB(int button, int state, int x, int y)
     }
 }
 
-void mouseDrawCB(int button, int state, int x, int y)
-{
-	std::cout << "(" << x << ", " << y <<")";
-    drawX = x;
-    drawY = y;
-    //shadowPixel[x][y] = 1;
-    if(button == GLUT_LEFT_BUTTON)
-    {
-        if(state == GLUT_DOWN)
-        {
-            mouseLeftDown = true;
-        }
-        else if(state == GLUT_UP)
-            mouseLeftDown = false;
-    }
-    else if(button == GLUT_RIGHT_BUTTON)
-    {
-        if(state == GLUT_DOWN)
-        {
-            mouseRightDown = true;
-        }
-        else if(state == GLUT_UP)
-            mouseRightDown = false;
-    }
-}
-
 void mouseMotionCB(int x, int y)
 {
     if(mouseLeftDown)
@@ -219,6 +197,69 @@ void mouseMotionCB(int x, int y)
     {
         cameraDistance -= (y - mouseY) * 0.2f;
         mouseY = y;
+    }
+}
+
+void mouseDrawCB(int button, int state, int x, int y)
+{
+	  std::cout << "(" << x << ", " << y <<")";
+    drawX = x;
+    drawY = y;
+    if(button == GLUT_LEFT_BUTTON)
+    {
+        if(state == GLUT_DOWN)
+        {
+            currShadowPixels.clear();
+            currShadowPixels.insert(std::make_pair(-1,-1));
+            mouseDrawLeftDown = true;
+        }
+        else if(state == GLUT_UP)
+        {
+            mouseDrawLeftDown = false;
+            shadowPixels.push_back(currShadowPixels);
+
+            List::iterator it;
+            Point pixel;
+            glColor3f(1.0f, 0.0f, 0.0f); 
+            glBegin(GL_POINTS);
+            for(it = currShadowPixels.begin(); it != currShadowPixels.end(); ++it){
+              pixel = *it;
+              glVertex2f(pixel.first,pixel.second);
+            }
+            //for( int i = 0; i < brushWidth; i++){
+            //  for( int j = 0; j < brushWidth; j++){
+            //    glVertex2f(100-(brushWidth/2)+i, 100-(brushWidth/2)+j);
+            //  }
+            //}
+            glEnd();
+        }
+    }
+    else if(button == GLUT_RIGHT_BUTTON)
+    {
+        if(state == GLUT_DOWN)
+        {
+            mouseDrawRightDown = true;
+        }
+        else if(state == GLUT_UP)
+            mouseDrawRightDown = false;
+    }
+}
+
+void mouseDrawMotionCB(int x, int y)
+{
+    if(mouseDrawLeftDown)
+    {
+        drawX = x;
+        drawY = y;
+        for( int i = 0; i < brushWidth; i++){
+          for( int j = 0; j < brushWidth; j++){
+            currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+          }
+        }
+        glutPostRedisplay();
+    }
+    if(mouseDrawRightDown)
+    {
     }
 }
 

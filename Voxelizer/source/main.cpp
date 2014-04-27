@@ -437,17 +437,23 @@ void displayCB()
 
 void displayDrawCB()
 {
-	glMatrixMode (GL_PROJECTION);
-	glLoadIdentity ();
-	glOrtho (0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1);
-	glMatrixMode (GL_MODELVIEW);
-	glDisable(GL_DEPTH_TEST);
-    //glClear(GL_COLOR_BUFFER_BIT);
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+    glOrtho (0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1);
+    glMatrixMode (GL_MODELVIEW);
+    glDisable(GL_DEPTH_TEST);
+    glColor3f(0.0f, 0.0f, 1.0f); 
+      
+    glBegin(GL_POINTS);
+
+    for( int i = 0; i < brushWidth; i++){
+      for( int j = 0; j < brushWidth; j++){
+        glVertex2f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
+      }
+    }
+
+    glEnd();
     
-	glBegin(GL_POINTS);
-	glVertex2f(drawX, drawY);
-	glEnd();
-	
     glutSwapBuffers();
 }
 //////////

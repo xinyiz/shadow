@@ -5,12 +5,15 @@
 #include <cstdlib>
 #include <iostream>
 #include <vector>
+#include <set>
+#include <utility>
 
 ///////////////
 // CONSTANTS //
 ///////////////
-const int   SCREEN_WIDTH    = 400;
-const int   SCREEN_HEIGHT   = 300;
+const int SCREEN_WIDTH = 400;
+const int SCREEN_HEIGHT = 300;
+const int BRUSH_WIDTH = 10;
 
 /////////////
 // GLOBALS //
@@ -34,19 +37,29 @@ extern float light_xpos;
 extern float light_ypos;
 extern float light_zpos;
 
+typedef std::pair<int, int> Point;
+typedef std::set<Point> List;
 // Drawn shadow pixels
-extern std::vector<std::vector<int> > shadowPixels;
+// Sequence of pixel addition or removal actions. Each is a set of points to be 
+// added or removed for the action. Addition actions are indicated by prescence 
+// of (-1,-1) pair in set,  (-2, -2) for removal
+extern std::vector<List> shadowPixels;
+// Tracking current pixel changes
+extern List currShadowPixels;
 
 // Interface parameters
 extern int screenWidth;
 extern int screenHeight;
 extern bool mouseLeftDown;
 extern bool mouseRightDown;
+extern bool mouseDrawLeftDown;
+extern bool mouseDrawRightDown;
 extern float mouseX, mouseY;
 extern float drawX, drawY;
 extern float cameraAngleX;
 extern float cameraAngleY;
 extern float cameraDistance;
+extern int brushWidth;
 
 bool initSharedMem();
 void initLights();
@@ -63,6 +76,7 @@ void reshapeCB(int w, int h);
 void mouseCB(int button, int stat, int x, int y);
 void mouseDrawCB(int button, int stat, int x, int y);
 void mouseMotionCB(int x, int y);
+void mouseDrawMotionCB(int x, int y);
 void deleteVBO(const GLuint vboId);
 void clearSharedMem();
 void exitCB();
