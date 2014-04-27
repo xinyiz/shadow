@@ -442,7 +442,13 @@ void displayDrawCB()
     glOrtho (0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1);
     glMatrixMode (GL_MODELVIEW);
     glDisable(GL_DEPTH_TEST);
-    glColor3f(0.0f, 0.0f, 1.0f); 
+    if(mouseDrawLeftDown){
+      glColor3f(0.6f, 0.98f, 0.95f); 
+    } else if(mouseDrawRightDown){
+      glColor3f(0.0f, 0.0f, 0.0f); 
+    } else {
+      return;
+    }
       
     glBegin(GL_POINTS);
 

@@ -215,33 +215,59 @@ void mouseDrawCB(int button, int state, int x, int y)
         }
         else if(state == GLUT_UP)
         {
-            mouseDrawLeftDown = false;
-            shadowPixels.push_back(currShadowPixels);
-
-            List::iterator it;
-            Point pixel;
-            glColor3f(1.0f, 0.0f, 0.0f); 
-            glBegin(GL_POINTS);
-            for(it = currShadowPixels.begin(); it != currShadowPixels.end(); ++it){
-              pixel = *it;
-              glVertex2f(pixel.first,pixel.second);
+            drawX = x;
+            drawY = y;
+            for( int i = 0; i < brushWidth; i++){
+              for( int j = 0; j < brushWidth; j++){
+                currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+              }
             }
-            //for( int i = 0; i < brushWidth; i++){
-            //  for( int j = 0; j < brushWidth; j++){
-            //    glVertex2f(100-(brushWidth/2)+i, 100-(brushWidth/2)+j);
-            //  }
+            glutPostRedisplay();
+
+            shadowPixels.push_back(currShadowPixels);
+            mouseDrawLeftDown = false;
+
+            //glColor3f(1.0f, 0.0f, 0.0f); 
+            //glBegin(GL_POINTS);
+            //List::iterator it;
+            //Point pixel;
+            //for(it = currShadowPixels.begin(); it != currShadowPixels.end(); ++it){
+            //  pixel = *it;
+            //  glVertex2f(pixel.first,pixel.second);
             //}
-            glEnd();
+            //glEnd();
         }
     }
     else if(button == GLUT_RIGHT_BUTTON)
     {
         if(state == GLUT_DOWN)
         {
+            currShadowPixels.clear();
+            currShadowPixels.insert(std::make_pair(-2,-2));
             mouseDrawRightDown = true;
         }
-        else if(state == GLUT_UP)
+        else if(state == GLUT_UP){
+            drawX = x;
+            drawY = y;
+            for( int i = 0; i < brushWidth; i++){
+              for( int j = 0; j < brushWidth; j++){
+                currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+              }
+            }
+            glutPostRedisplay();
             mouseDrawRightDown = false;
+            shadowPixels.push_back(currShadowPixels);
+
+            //glColor3f(0.0f, 1.0f, 0.0f); 
+            //glBegin(GL_POINTS);
+            //List::iterator it;
+            //Point pixel;
+            //for(it = currShadowPixels.begin(); it != currShadowPixels.end(); ++it){
+            //  pixel = *it;
+            //  glVertex2f(pixel.first,pixel.second);
+            //}
+            //glEnd();
+        }
     }
 }
 
@@ -260,6 +286,14 @@ void mouseDrawMotionCB(int x, int y)
     }
     if(mouseDrawRightDown)
     {
+        drawX = x;
+        drawY = y;
+        for( int i = 0; i < brushWidth; i++){
+          for( int j = 0; j < brushWidth; j++){
+            currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+          }
+        }
+        glutPostRedisplay();
     }
 }
 
