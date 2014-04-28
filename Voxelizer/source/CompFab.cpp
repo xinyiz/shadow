@@ -135,10 +135,12 @@ CompFab::VoxelGridStruct::VoxelGridStruct(Vec3 lowerLeft, unsigned int dimX, uns
     
     //Allocate Memory
     m_insideArray = new bool[m_size];
+    m_carvedArray = new bool[m_size];
     
     for(unsigned int ii=0; ii<m_size; ++ii)
     {
         m_insideArray[ii] = false;
+        m_carvedArray[ii] = true;
     }
     
 }
@@ -146,6 +148,7 @@ CompFab::VoxelGridStruct::VoxelGridStruct(Vec3 lowerLeft, unsigned int dimX, uns
 CompFab::VoxelGridStruct::~VoxelGridStruct()
 {
     delete[] m_insideArray;
+    delete[] m_carvedArray;
 }
 
 

@@ -124,8 +124,14 @@ namespace CompFab
             
             return m_insideArray[k*(m_dimX*m_dimY)+j*m_dimY + i];
         }
+
+        inline bool & isCarved(unsigned int i, unsigned int j, unsigned int k)
+        {
+            return m_carvedArray[k*(m_dimX*m_dimY)+j*m_dimY + i];
+        }
         
         bool *m_insideArray;
+        bool *m_carvedArray;
         unsigned int m_dimX, m_dimY, m_dimZ, m_size;
         double m_spacing;
         Vec3 m_lowerLeft;

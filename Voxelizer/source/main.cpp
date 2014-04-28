@@ -50,7 +50,9 @@ unsigned int vertices_size;
 unsigned int triangles_size;
 
 // Voxel Lamp Representation for 3d printing 
-CompFab::VoxelGrid *g_voxelGrid;
+CompFab::VoxelGrid *g_inputLampGrid;
+double gridSpacing;
+CompFab::Vec3 gridLLeft;
 
 // Used by voxelizer from assn 0;
 typedef std::vector<CompFab::Triangle> TriangleList;
@@ -127,7 +129,7 @@ int numSurfaceIntersections(CompFab::Vec3 &voxelPos, CompFab::Vec3 &dir)
 
 /*
   Load Mesh and construct the voxel grid
-  @set g_voxelGrid
+  @set g_inputLampGrid
 */
 bool loadMesh(char *filename, unsigned int dim)
 {
@@ -167,7 +169,9 @@ bool loadMesh(char *filename, unsigned int dim)
     
     CompFab::Vec3 hspacing(0.5*spacing, 0.5*spacing, 0.5*spacing);
     
-    g_voxelGrid = new CompFab::VoxelGrid(bbMin-hspacing, dim, dim, dim, spacing);
+    g_inputLampGrid = new CompFab::VoxelGrid(bbMin-hspacing, dim, dim, dim, spacing);
+    gridSpacing = g_inputLampGrid->m_spacing;
+    gridLLeft = g_inputLampGrid->m_lowerLeft;
 
     delete tempMesh;
     return true;
@@ -182,20 +186,19 @@ void saveVoxelsToObj(const char * outfile)
  
     Mesh box;
     Mesh mout;
-    int nx = g_voxelGrid->m_dimX;
-    int ny = g_voxelGrid->m_dimY;
-    int nz = g_voxelGrid->m_dimZ;
-    double spacing = g_voxelGrid->m_spacing;
+    int nx = g_inputLampGrid->m_dimX;
+    int ny = g_inputLampGrid->m_dimY;
+    int nz = g_inputLampGrid->m_dimZ;
     
-    CompFab::Vec3 hspacing(0.5*spacing, 0.5*spacing, 0.5*spacing);
+    CompFab::Vec3 hspacing(0.5*gridSpacing, 0.5*gridSpacing, 0.5*gridSpacing);
     
     for (int ii = 0; ii < nx; ii++) {
         for (int jj = 0; jj < ny; jj++) {
             for (int kk = 0; kk < nz; kk++) {
-                if(!g_voxelGrid->isInside(ii,jj,kk)){
+                if(!g_inputLampGrid->isInside(ii,jj,kk)){
                   continue;
                 }
-                CompFab::Vec3 coord(((double)ii)*spacing, ((double)jj)*spacing, ((double)kk)*spacing);
+                CompFab::Vec3 coord(((double)ii)*gridSpacing, ((double)jj)*gridSpacing, ((double)kk)*gridSpacing);
                 CompFab::Vec3 box0 = coord - hspacing;
                 CompFab::Vec3 box1 = coord + hspacing;
                 makeCube(box, box0, box1);
@@ -217,20 +220,19 @@ void triangulateVoxelGrid(const char * outfile)
 
     Mesh box;
     Mesh mout;
-    int nx = g_voxelGrid->m_dimX;
-    int ny = g_voxelGrid->m_dimY;
-    int nz = g_voxelGrid->m_dimZ;
-    double spacing = g_voxelGrid->m_spacing;
+    int nx = g_inputLampGrid->m_dimX;
+    int ny = g_inputLampGrid->m_dimY;
+    int nz = g_inputLampGrid->m_dimZ;
 
-    CompFab::Vec3 hspacing(0.5*spacing, 0.5*spacing, 0.5*spacing);
+    CompFab::Vec3 hspacing(0.5*gridSpacing, 0.5*gridSpacing, 0.5*gridSpacing);
 
     for (int ii = 0; ii < nx; ii++) {
         for (int jj = 0; jj < ny; jj++) {
             for (int kk = 0; kk < nz; kk++) {
-                if(!g_voxelGrid->isInside(ii,jj,kk)){
+                if(!g_inputLampGrid->isInside(ii,jj,kk)){
                   continue;
                 }
-                CompFab::Vec3 coord(((double)ii)*spacing, ((double)jj)*spacing, ((double)kk)*spacing);
+                CompFab::Vec3 coord(((double)ii)*gridSpacing, ((double)jj)*gridSpacing, ((double)kk)*gridSpacing);
                 CompFab::Vec3 box0 = coord - hspacing;
                 CompFab::Vec3 box1 = coord + hspacing;
                 makeCube(box, box0, box1);
@@ -312,23 +314,23 @@ void voxelizer(char* filename, char* outfilename, unsigned int voxelres)
     // Carve the voxel grid to produce the input lamp voxel representation
     CompFab::Vec3 direction(1.0,0.0,0.0);
 
-    int nx = g_voxelGrid->m_dimX;
-    int ny = g_voxelGrid->m_dimY;
-    int nz = g_voxelGrid->m_dimZ;
-    double spacing = g_voxelGrid->m_spacing;
-    CompFab::Vec3 left = g_voxelGrid->m_lowerLeft;
-    cout << "m_lowerleft" << left.m_x << "," << left.m_y << "," << left.m_z;
+    int nx = g_inputLampGrid->m_dimX;
+    int ny = g_inputLampGrid->m_dimY;
+    int nz = g_inputLampGrid->m_dimZ;
+
+    cout << "m_lowerleft" << gridLLeft.m_x << "," << gridLLeft.m_y << "," << gridLLeft.m_z;
     
-    CompFab::Vec3 hspacing(0.5*spacing, 0.5*spacing, 0.5*spacing);
+    CompFab::Vec3 hspacing(0.5*gridSpacing, 0.5*gridSpacing, 0.5*gridSpacing);
     
-    // Iterate over all voxels in g_voxelGrid and test whether they are inside our outside 
+    // Iterate over all voxels in g_inputLampGrid and test whether they are inside our outside 
     // of the  surface defined by the triangles in voxelLampMeshTriangles
     for (int ii = 0; ii < nx; ii++) {
         for (int jj = 0; jj < ny; jj++) {
             for (int kk = 0; kk < nz; kk++) {
-                CompFab::Vec3 vPos(left.m_x + ((double)ii)*spacing, left.m_y + ((double)jj)*spacing, left.m_z +((double)kk)*spacing);
+                CompFab::Vec3 vPos(gridLLeft.m_x + ((double)ii)*gridSpacing, gridLLeft.m_y + ((double)jj)*gridSpacing, gridLLeft.m_z +((double)kk)*gridSpacing);
                 if(numSurfaceIntersections(vPos, direction) % 2 != 0){
-                    g_voxelGrid->isInside(ii,jj,kk) = 1;
+                    g_inputLampGrid->isInside(ii,jj,kk) = 1;
+                    g_inputLampGrid->isCarved(ii,jj,kk) = 0;
                 }
             }
         }
@@ -349,6 +351,31 @@ void createSceneData(float roomDim, float lightXPos, float lightYPos, float ligh
     light_zpos = lightZPos;
     room_dim = roomDim;
 }
+///////////////
+// UPDATING ///
+///////////////
+/*
+  @param ii, jj, kk - voxel containing the light source  
+  @param shadePoint - the end point of the light ray
+  Returns the indices of the voxels intersected by the ray - in array of ints, each third
+  element is a new voxel.
+*/
+//void voxelsIntersected(int ii, int jj, int kk, CompFab::Vec3 shadePoint){
+//    std::vector<int> voxelIndices;
+//    CompFab::Vec3 vPos(gridLLeft.m_x + ((double)ii)*gridSpacing, gridLLeft.m_y + ((double)jj)*gridSpacing, gridLLeft.m_z +((double)kk)*gridSpacing);
+//    CompFab::Vec3 dir = (shadePoint - vPos).normalize();
+//    CompFab::RayStruct vRay = CompFab::RayStruct(voxelPos, dir);
+//
+//    for(unsigned int i = 0; i < g_voxelTriangles.size(); i++){
+//        CompFab::Triangle triangle = g_voxelTriangles[i];
+//        if(rayTriangleIntersection(vRay, triangle) == 1){
+//            numHits ++;
+//        }
+//    }
+//    CompFab::Triangle(v1,v2,v3)
+//
+//}
+
 
 ///////////////
 // RENDERING //
