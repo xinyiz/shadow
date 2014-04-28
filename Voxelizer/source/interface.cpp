@@ -36,7 +36,7 @@ bool initSharedMem()
 void initLights()
 {
     // set up light colors (ambient, diffuse, specular)
-    GLfloat lightKd[] = {0.2f, 0.6f, .9f, 1.0f};  // diffuse light
+    GLfloat lightKd[] = {0.2f, 0.6f, 0.9f, 1.0f};  // diffuse light
     GLfloat lightKs[] = {1, 1, 1, 1};           // specular light
     //glLightfv(GL_LIGHT0, GL_AMBIENT, lightKa);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightKd);
@@ -124,7 +124,9 @@ void initGL()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
     glEnable(GL_NORMALIZE);
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
 
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     glEnable(GL_COLOR_MATERIAL);
