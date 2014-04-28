@@ -136,6 +136,8 @@ CompFab::VoxelGridStruct::VoxelGridStruct(Vec3 lowerLeft, unsigned int dimX, uns
     //Allocate Memory
     m_insideArray = new bool[m_size];
     m_carvedArray = new bool[m_size];
+    //Store indices of the triangles
+    m_triangleList = new int[m_size];
     
     for(unsigned int ii=0; ii<m_size; ++ii)
     {
@@ -149,6 +151,7 @@ CompFab::VoxelGridStruct::~VoxelGridStruct()
 {
     delete[] m_insideArray;
     delete[] m_carvedArray;
+    delete[] m_triangleList;
 }
 
 

@@ -129,9 +129,20 @@ namespace CompFab
         {
             return m_carvedArray[k*(m_dimX*m_dimY)+j*m_dimY + i];
         }
+
+        inline void setTrianglesIndex(unsigned int i, unsigned int j, unsigned int k, int index)
+        {
+            m_triangleList[k*(m_dimX*m_dimY)+j*m_dimY + i] = index;
+        }
+        // Returns index of first of the 12 triangles for a cube, indices are contiguous
+        inline int getFirstTriangle(unsigned int i, unsigned int j, unsigned int k)
+        {
+            return m_triangleList[k*(m_dimX*m_dimY)+j*m_dimY + i];
+        }
         
         bool *m_insideArray;
         bool *m_carvedArray;
+        int *m_triangleList;
         unsigned int m_dimX, m_dimY, m_dimZ, m_size;
         double m_spacing;
         Vec3 m_lowerLeft;

@@ -33,7 +33,8 @@ public:
   
   void compute_norm();
   void rescale();
-  void append(const Mesh & m);
+  //returns index of first triangle of newly added cube
+  int append(const Mesh & m);
   Mesh & operator= (const Mesh& m);
   virtual void update();
 };

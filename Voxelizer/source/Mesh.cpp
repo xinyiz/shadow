@@ -41,7 +41,7 @@ void makeCube(Mesh & m, const CompFab::Vec3 & mn,
   }
 }
 
-void Mesh::append(const Mesh & m)
+int Mesh::append(const Mesh & m)
 {
   unsigned int offset = v.size();
   unsigned int ot = t.size();
@@ -52,6 +52,7 @@ void Mesh::append(const Mesh & m)
       t[ii][jj] += offset;
     }
   }
+  return ot;
 }
 
 Mesh & Mesh::operator= (const Mesh& m)

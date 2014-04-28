@@ -202,7 +202,10 @@ void saveVoxelsToObj(const char * outfile)
                 CompFab::Vec3 box0 = coord - hspacing;
                 CompFab::Vec3 box1 = coord + hspacing;
                 makeCube(box, box0, box1);
-                mout.append(box);
+                int triIndex = mout.append(box);
+                //Denote the start index of the 12 triangles for this voxel
+                //the indices are contiguous
+                g_inputLampGrid->setTrianglesIndex(ii,jj,kk,triIndex);
             }
         }
     }
