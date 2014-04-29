@@ -290,10 +290,9 @@ void triangulateVoxelGrid(const char * outfile)
         v3 = g_carvedLampMesh.v[g_carvedLampMesh.t[tri][2]];
         g_inputLampTriangles.push_back(CompFab::Triangle(v1,v2,v3));
     }
-    cout << "g_inputTriangles shoudl be 2616: " << g_inputLampTriangles[2616].m_v1.mx;
 
     //TODO: testing - remove
-    CompFab::Vec3 spoint(5.0,5.0,5.0);
+    CompFab::Vec3 spoint(5.1,5.3,5.4);
     voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, false);
 
     g_carvedLampMesh.save_obj(outfile);
@@ -304,8 +303,6 @@ void triangulateVoxelGrid(const char * outfile)
 
     //Populate the vertices and upload data
     lamp_vertices = new GLfloat[vertices_size*3];
-    cout << "parsed triangles size: " << triangles_size << " " << "\n";
-    cout << "parsed vertices size: " << vertices_size << " " << "\n";
     for(unsigned int vert =0; vert<g_carvedLampMesh.v.size(); ++vert)
     {
         p1 = (GLfloat) g_carvedLampMesh.v[vert][0];
@@ -455,7 +452,6 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
     for(unsigned int tri = startTriangle; tri< startTriangle + 12; ++tri)
     {
         prev_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
-        cout << "Init d:" << prev_d << "\n";
         if(prev_d){
             updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
             if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
@@ -502,12 +498,7 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
             {
                 // Figure out which voxel to examine next
 
-                CompFab::Vec3 v1,v2,v3;
-                v1 = g_carvedLampMesh.v[g_carvedLampMesh.t[tri][0]];
-                v2 = g_carvedLampMesh.v[g_carvedLampMesh.t[tri][1]];
-                v3 = g_carvedLampMesh.v[g_carvedLampMesh.t[tri][2]];
-               //g_inputLampTriangles.push_back(CompFab::Triangle(v1,v2,v3));
-                curr_d = rayTriangleIntersection(vRay, CompFab::Triangle(v1,v2,v3));
+                curr_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
                 cout << "prev d curr d:" <<  prev_d << "," << curr_d << "\n";
                 cout << "startT:" << tri << "\n";
                 if(prev_d < curr_d){    // Check triangle exit face triangle
