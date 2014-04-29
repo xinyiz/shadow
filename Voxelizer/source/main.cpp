@@ -22,9 +22,35 @@ using std::ends;
 
 #define WALL_THICKNESS		0.05f
 
+///////////////
+// CONSTANTS //
+///////////////
+
+int nextVoxelLookup[36] = 
+{ 
+     0, 0,-1, 
+     0, 0,-1, 
+     0,-1, 0, 
+     0,-1, 0, 
+     1, 0, 0, 
+     1, 0, 0, 
+     0, 1, 0, 
+     0, 1, 0, 
+    -1, 0, 0, 
+    -1, 0, 0, 
+     0, 0, 1, 
+     0, 0, 1, 
+};
+
+
+inline void removeActiveTriangles(unsigned int start);
+inline void addActiveTriangles(unsigned int start);
+inline void updateNextVoxel(unsigned int &curr_i, unsigned int &curr_j, unsigned int &curr_k, unsigned int tri);
+void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add);
 /////////////
 // GLOBALS //
 /////////////
+
 typedef std::vector<CompFab::Triangle> TriangleList;
 
 /* Voxelized Lamp Mesh Data for 3D PRINTING */
@@ -243,7 +269,6 @@ void triangulateVoxelGrid(const char * outfile)
                 CompFab::Vec3 box0 = coord - hspacing;
                 CompFab::Vec3 box1 = coord + hspacing;
                 makeCube(box, box0, box1);
-                g_carvedLampMesh.append(box);
                 int triIndex = g_carvedLampMesh.append(box);
                 //Denote the start index of the 12 triangles for this voxel
                 //the indices are contiguous
@@ -265,6 +290,12 @@ void triangulateVoxelGrid(const char * outfile)
         v3 = g_carvedLampMesh.v[g_carvedLampMesh.t[tri][2]];
         g_inputLampTriangles.push_back(CompFab::Triangle(v1,v2,v3));
     }
+    cout << "g_inputTriangles shoudl be 2616: " << g_inputLampTriangles[2616].m_v1.mx;
+
+    //TODO: testing - remove
+    CompFab::Vec3 spoint(5.0,5.0,5.0);
+    voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, false);
+
     g_carvedLampMesh.save_obj(outfile);
 
     GLfloat p1, p2, p3;
@@ -378,93 +409,121 @@ void createSceneData(float roomDim, float lightXPos, float lightYPos, float ligh
   triangle - mapping is change to curr i,j,k voxel index.
 */
 //TODO: doesn't consider edge cases
-//int nextVoxelLookup[36] = 
-//{ 
-//     0, 0,-1, 
-//     0, 0,-1, 
-//     0,-1, 0, 
-//     0,-1, 0, 
-//     1, 0, 0, 
-//     1, 0, 0, 
-//     0, 1, 0, 
-//     0, 1, 0, 
-//    -1, 0, 0, 
-//    -1, 0, 0, 
-//     0, 0, 1, 
-//     0, 0, 1, 
-//}
-//
-//
-//inline void updateNextVoxel(unsigned int &curr_i, unsigned int &curr_j, unsigned int &curr_k, unsigned int tri){
-//    curr_i += nextVoxelLookup(tri*3);
-//    curr_j += nextVoxelLookup(tri*3 + 1);
-//    curr_k += nextVoxelLookup(tri*3 + 2);
-//}
-//inline void addActiveTriangles(unsigned int start){
-//    for(int i = start; i < start+12; i++){
-//      g_carvedLampMesh->activeTriangles.insert(i);
-//    }
-//}
-///*
-//  @param ii, jj, kk - voxel containing the light source  
-//  @param shadePoint - the end point of the light ray
-//  Correctly updates the lamp mesh information for 3d printing and rendering
-//*/
-//void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add){
-//    std::vector<int> voxelIndices;
-//    CompFab::Vec3 vPos(gridLLeft.m_x + ((double)ii)*gridSpacing, gridLLeft.m_y + ((double)jj)*gridSpacing, gridLLeft.m_z +((double)kk)*gridSpacing);
-//    CompFab::Vec3 dir = (shadePoint - vPos).normalize();
-//    CompFab::RayStruct vRay = CompFab::RayStruct(voxelPos, dir);
-//
-//
-//    unsigned int curr_i = ii;
-//    unsigned int curr_j = jj;
-//    unsigned int curr_k = kk;
-//    unsigned int startTriangle;
-//    unsigned int nextVoxelIndex[3];
-//    float prev_d, curr_d;       // rayTriangleIntersection dist to track entering/exit face
-//
-//
-//    startTriangle = g_lampVoxelGrid->getFirstTriangle(ii, jj, kk);
-//    for(unsigned int tri = triangleIndex; tri< triangleIndex + 12; ++tri)
-//    {
-//        prev_d = rayTriangleIntersection(vRay, g_inputLampTrianges[tri])
-//        if(prev_d){
-//            updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
-//            if(g_inputLampGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
-//               g_inputLampGrid->isCarved(curr_i, curr_j, curr_k) == 1){
-//
-//               addActiveTriangles(startTriangle);
-//               //TODO: Update lamp_triangles
-//            }
-//            break;
-//        }
-//    }
-//
-//    // Case 1:  ADD 
-//    // Iterate until ray exits lamp bounds 
-//    while(true){
-//        if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 0)
-//            return 0;
-//
-//        startTriangle = g_lampVoxelGrid->getFirstTriangle(ii, jj, kk);
-//        for(unsigned int tri = triangleIndex; tri< triangleIndex + 12; ++tri)
-//        {
-//            // Figure out which voxel to examine next
-//            curr_d = rayTriangleIntersection(vRay, g_inputLampTrianges[tri])
-//            if(prev_d < curr_d){    // Check triangle exit face triangle
-//                updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
-//                if(g_inputLampGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
-//                   g_inputLampGrid->isCarved(curr_i, curr_j, curr_k) == 1){
-//                   addActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
-//                   //TODO: Update lamp_triangles
-//                }
-//                break;
-//            }
-//        }
-//        prev_d = curr_d;
-//    }
-//}
+
+
+inline void updateNextVoxel(unsigned int &curr_i, unsigned int &curr_j, unsigned int &curr_k, unsigned int tri){
+    cout << "triangle:" << tri << "\n";
+    curr_i = curr_i + nextVoxelLookup[tri*3];
+    curr_j = curr_j + nextVoxelLookup[tri*3 + 1];
+    curr_k = curr_k + nextVoxelLookup[tri*3 + 2];
+}
+
+inline void addActiveTriangles(unsigned int start){
+    for(int i = start; i < start+12; i++){
+      g_carvedLampMesh.activeTriangles.insert(i);
+    }
+}
+
+inline void removeActiveTriangles(unsigned int start){
+    for(int i = start; i < start+12; i++){
+      g_carvedLampMesh.activeTriangles.erase(i);
+    }
+}
+
+/*
+  @param ii, jj, kk - voxel containing the light source  
+  @param shadePoint - the end point of the light ray
+  Correctly updates the lamp mesh information for 3d printing and rendering
+*/
+void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add){
+    std::vector<int> voxelIndices;
+    CompFab::Vec3 vPos(gridLLeft.m_x + ((double)ii)*gridSpacing, gridLLeft.m_y + ((double)jj)*gridSpacing, gridLLeft.m_z +((double)kk)*gridSpacing);
+    CompFab::Vec3 dir = (shadePoint - vPos);
+    dir.normalize();
+    CompFab::RayStruct vRay = CompFab::RayStruct(vPos, dir);
+
+
+    unsigned int curr_i = ii;
+    unsigned int curr_j = jj;
+    unsigned int curr_k = kk;
+    unsigned int startTriangle;
+    unsigned int nextVoxelIndex[3];
+    float prev_d, curr_d;       // rayTriangleIntersection dist to track entering/exit face
+
+
+    startTriangle = g_lampVoxelGrid->getFirstTriangle(ii, jj, kk);
+    for(unsigned int tri = startTriangle; tri< startTriangle + 12; ++tri)
+    {
+        prev_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
+        cout << "Init d:" << prev_d << "\n";
+        if(prev_d){
+            updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
+            if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
+               g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 1){
+               addActiveTriangles(startTriangle);
+            }
+            break;
+        }
+    }
+
+    // Case 1:  ADD 
+    // Iterate until ray exits lamp bounds 
+    if(add){
+        while(true){
+            if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 0)
+                return;
+
+            startTriangle = g_lampVoxelGrid->getFirstTriangle(curr_i, curr_j, curr_k);
+            for(unsigned int tri = startTriangle; tri< startTriangle + 12; ++tri)
+            {
+                // Figure out which voxel to examine next
+                curr_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
+                if(prev_d < curr_d){    // Check triangle exit face triangle
+                    updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
+                    if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
+                       g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 1){
+                       addActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
+                    }
+                    break;
+                }
+            }
+            prev_d = curr_d;
+        }
+    } else{ // Case 2:  REMOVE 
+        cout << "Removing voxels in ray path\n";
+        while(true){
+            cout << "Start voxel: " << ii << "," << jj << "," << kk << "\n";
+            cout << "Curr voxel: " << curr_i << "," << curr_j << "," << curr_k << "\n";
+            if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 0)
+                return;
+
+            startTriangle = g_lampVoxelGrid->getFirstTriangle(curr_i, curr_j, curr_k);
+            for(unsigned int tri = startTriangle; tri< startTriangle + 12; tri++)
+            {
+                // Figure out which voxel to examine next
+
+                CompFab::Vec3 v1,v2,v3;
+                v1 = g_carvedLampMesh.v[g_carvedLampMesh.t[tri][0]];
+                v2 = g_carvedLampMesh.v[g_carvedLampMesh.t[tri][1]];
+                v3 = g_carvedLampMesh.v[g_carvedLampMesh.t[tri][2]];
+               //g_inputLampTriangles.push_back(CompFab::Triangle(v1,v2,v3));
+                curr_d = rayTriangleIntersection(vRay, CompFab::Triangle(v1,v2,v3));
+                cout << "prev d curr d:" <<  prev_d << "," << curr_d << "\n";
+                cout << "startT:" << tri << "\n";
+                if(prev_d < curr_d){    // Check triangle exit face triangle
+                    updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
+                    if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
+                       g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 0){
+                        cout << "Removing Triangles start at: " << startTriangle << "\n";
+                        removeActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
+                    }
+                    break;
+                }
+            }
+            prev_d = curr_d;
+        }
+    }
+}
 
 
 ///////////////

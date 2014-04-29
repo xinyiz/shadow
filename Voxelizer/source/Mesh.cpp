@@ -132,8 +132,10 @@ void Mesh::save(std::ostream & out, std::vector<CompFab::Vec3> * vert)
   }else{
     std::cout << "Mesh triangles size: " << t.size() << "\n";
     for(size_t ii=0;ii<t.size();ii++){
-      out<<fTok<<" "<<t[ii][0]+1<<" "<<
+      if(activeTriangles.find(ii) != activeTriangles.end()){
+        out<<fTok<<" "<<t[ii][0]+1<<" "<<
           t[ii][1]+1<<" "<<t[ii][2]+1<<"\n";
+      }
     }
   }
   out<<"#end\n";
