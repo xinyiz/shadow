@@ -131,7 +131,7 @@ int numSurfaceIntersections(CompFab::Vec3 &voxelPos, CompFab::Vec3 &dir)
     CompFab::RayStruct vRay = CompFab::RayStruct(voxelPos, dir);
     for(unsigned int i = 0; i < g_voxelTriangles.size(); i++){
         CompFab::Triangle triangle = g_voxelTriangles[i];
-        if(rayTriangleIntersection(vRay, triangle) == 1){
+        if(rayTriangleIntersection(vRay, triangle)){
             numHits ++;
         }
     }
@@ -243,6 +243,7 @@ void triangulateVoxelGrid(const char * outfile)
                 CompFab::Vec3 box0 = coord - hspacing;
                 CompFab::Vec3 box1 = coord + hspacing;
                 makeCube(box, box0, box1);
+                g_carvedLampMesh.append(box);
                 int triIndex = g_carvedLampMesh.append(box);
                 //Denote the start index of the 12 triangles for this voxel
                 //the indices are contiguous
@@ -372,10 +373,33 @@ void createSceneData(float roomDim, float lightXPos, float lightYPos, float ligh
 //////////////
 // UPDATING //
 //////////////
-//TODO:
-//inline void getNextVoxel(unsigned int *nextVoxelIndex, unsigned int triNum){
+/* 
+  Maps triangle to the voxel bordering face containing 
+  triangle - mapping is change to curr i,j,k voxel index.
+*/
+//TODO: doesn't consider edge cases
+//int nextVoxelLookup[36] = 
+//{ 
+//     0, 0,-1, 
+//     0, 0,-1, 
+//     0,-1, 0, 
+//     0,-1, 0, 
+//     1, 0, 0, 
+//     1, 0, 0, 
+//     0, 1, 0, 
+//     0, 1, 0, 
+//    -1, 0, 0, 
+//    -1, 0, 0, 
+//     0, 0, 1, 
+//     0, 0, 1, 
 //}
 //
+//
+//inline void updateNextVoxel(unsigned int &curr_i, unsigned int &curr_j, unsigned int &curr_k, unsigned int tri){
+//    curr_i += nextVoxelLookup(tri*3);
+//    curr_j += nextVoxelLookup(tri*3 + 1);
+//    curr_k += nextVoxelLookup(tri*3 + 2);
+//}
 //inline void addActiveTriangles(unsigned int start){
 //    for(int i = start; i < start+12; i++){
 //      g_carvedLampMesh->activeTriangles.insert(i);
@@ -406,7 +430,7 @@ void createSceneData(float roomDim, float lightXPos, float lightYPos, float ligh
 //    {
 //        prev_d = rayTriangleIntersection(vRay, g_inputLampTrianges[tri])
 //        if(prev_d){
-//            getNextVoxel(*nextVoxelIndex, (tri % 12));
+//            updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
 //            if(g_inputLampGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
 //               g_inputLampGrid->isCarved(curr_i, curr_j, curr_k) == 1){
 //
@@ -429,8 +453,7 @@ void createSceneData(float roomDim, float lightXPos, float lightYPos, float ligh
 //            // Figure out which voxel to examine next
 //            curr_d = rayTriangleIntersection(vRay, g_inputLampTrianges[tri])
 //            if(prev_d < curr_d){    // Check triangle exit face triangle
-//                getNextVoxel(*nextVoxelIndex, (tri % 12));      //TODO: figure this out
-//
+//                updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
 //                if(g_inputLampGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
 //                   g_inputLampGrid->isCarved(curr_i, curr_j, curr_k) == 1){
 //                   addActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
