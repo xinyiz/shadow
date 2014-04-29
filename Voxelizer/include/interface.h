@@ -65,6 +65,7 @@ bool initSharedMem();
 void initLights();
 void setCamera(float posX, float posY, float posZ, float targetX, float targetY, float targetZ);
 void toPerspective();
+bool isValidPoint(int x, int y);
 void displayCB();
 void displayDrawCB();
 int  initGLUT(int argc, char **argv);

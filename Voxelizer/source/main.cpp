@@ -360,40 +360,40 @@ void createSceneData(float roomDim, float lightXPos, float lightYPos, float ligh
 */
 void room()
 {
-	/* ceiling */
-	glPushMatrix();
-	glTranslatef(room_dim/2,room_dim,room_dim/2);
-	glScalef(room_dim, WALL_THICKNESS, room_dim);
-	glutSolidCube( 1.0 );
-	glPopMatrix();
+    /* ceiling */
+    glPushMatrix();
+    glTranslatef(room_dim/2,room_dim,room_dim/2);
+    glScalef(room_dim, WALL_THICKNESS, room_dim);
+    glutSolidCube( 1.0 );
+    glPopMatrix();
+    
+    /* floor */
+    glPushMatrix();
+    glTranslatef(room_dim/2,0,room_dim/2);
+    glScalef(room_dim, WALL_THICKNESS, room_dim);
+    glutSolidCube( 1.0 );
+    glPopMatrix();
 	
-	/* floor */
-	glPushMatrix();
-	glTranslatef(room_dim/2,0,room_dim/2);
-	glScalef(room_dim, WALL_THICKNESS, room_dim);
-	glutSolidCube( 1.0 );
-	glPopMatrix();
+    /* right wall */
+    glPushMatrix();
+    glTranslatef(room_dim,room_dim/2,room_dim/2);
+    glScalef(WALL_THICKNESS, room_dim, room_dim);
+    glutSolidCube( 1.0 );
+    glPopMatrix();
 	
-	/* right wall */
-	glPushMatrix();
-	glTranslatef(room_dim,room_dim/2,room_dim/2);
-	glScalef(WALL_THICKNESS, room_dim, room_dim);
-	glutSolidCube( 1.0 );
-	glPopMatrix();
-	
-	/* left wall */
-	glPushMatrix();
-	glTranslatef(0,room_dim/2,room_dim/2);
-	glScalef(WALL_THICKNESS, room_dim, room_dim);
-	glutSolidCube( 1.0 );
-	glPopMatrix();
-	
-	/* back wall */
-	glPushMatrix();
-	glTranslatef(room_dim/2,room_dim/2,0);
-	glScalef(room_dim, room_dim, WALL_THICKNESS);
-	glutSolidCube( 1.0 );
-	glPopMatrix();
+    /* left wall */
+    glPushMatrix();
+    glTranslatef(0,room_dim/2,room_dim/2);
+    glScalef(WALL_THICKNESS, room_dim, room_dim);
+    glutSolidCube( 1.0 );
+    glPopMatrix();
+    
+    /* back wall */
+    glPushMatrix();
+    glTranslatef(room_dim/2,room_dim/2,0);
+    glScalef(room_dim, room_dim, WALL_THICKNESS);
+    glutSolidCube( 1.0 );
+    glPopMatrix();
 }
 
 /* 
@@ -443,46 +443,39 @@ void displayDrawCB()
     glOrtho (0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1);
     glMatrixMode (GL_MODELVIEW);
     glDisable(GL_DEPTH_TEST);
-
-    // Outline of 2D cutout of walls
-    glLineWidth(1.0);
-    glColor3f(1.0f, 1.0f, 1.0f); 
-    // Top square
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(SCREEN_WIDTH/3,0);
-    glVertex2f(2*SCREEN_WIDTH/3,0);
-    glVertex2f(2*SCREEN_WIDTH/3,SCREEN_HEIGHT/3);
-    glVertex2f(SCREEN_WIDTH/3, SCREEN_HEIGHT/3);
-    glVertex2f(SCREEN_WIDTH/3,0);
-    glEnd();
-
-    // Right square
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(2*SCREEN_WIDTH/3,SCREEN_HEIGHT/3);
-    glVertex2f(SCREEN_WIDTH,SCREEN_HEIGHT/3);
-    glVertex2f(SCREEN_WIDTH,2*SCREEN_HEIGHT/3);
-    glVertex2f(2*SCREEN_WIDTH/3, 2*SCREEN_HEIGHT/3);
-    glVertex2f(2*SCREEN_WIDTH/3,SCREEN_HEIGHT/3);
-    glEnd();
     
-    // Left square
+    glColor3f(0.7f, 0.7f, 0.7f); 
+    glBegin(GL_QUADS);
+    // Top left
+    glVertex2f(0,0);
+    glVertex2f(SCREEN_WIDTH/3,0);
+    glVertex2f(SCREEN_WIDTH/3,SCREEN_HEIGHT/3);
+    glVertex2f(0, SCREEN_HEIGHT/3);
+    // Top right
+    glVertex2f(2*SCREEN_WIDTH/3,0);
+    glVertex2f(SCREEN_WIDTH,0);
+    glVertex2f(SCREEN_WIDTH,SCREEN_HEIGHT/3);
+    glVertex2f(2*SCREEN_WIDTH/3, SCREEN_HEIGHT/3);
+    // Bottom right
+    glVertex2f(2*SCREEN_WIDTH/3,2*SCREEN_HEIGHT/3);
+    glVertex2f(SCREEN_WIDTH,2*SCREEN_HEIGHT/3);
+    glVertex2f(SCREEN_WIDTH,SCREEN_HEIGHT);
+    glVertex2f(2*SCREEN_WIDTH/3, SCREEN_HEIGHT);
+    // Bottom left
+    glVertex2f(0,2*SCREEN_HEIGHT/3);
+    glVertex2f(SCREEN_WIDTH/3,2*SCREEN_HEIGHT/3);
+    glVertex2f(SCREEN_WIDTH/3,SCREEN_HEIGHT);
+    glVertex2f(0, SCREEN_HEIGHT);
+    glEnd();
+    // Center box
     glBegin(GL_LINE_STRIP);
     glVertex2f(SCREEN_WIDTH/3,SCREEN_HEIGHT/3);
-    glVertex2f(0,SCREEN_HEIGHT/3);
-    glVertex2f(0,2*SCREEN_HEIGHT/3);
+    glVertex2f(2*SCREEN_WIDTH/3,SCREEN_HEIGHT/3);
+    glVertex2f(2*SCREEN_WIDTH/3,2*SCREEN_HEIGHT/3);
     glVertex2f(SCREEN_WIDTH/3, 2*SCREEN_HEIGHT/3);
     glVertex2f(SCREEN_WIDTH/3,SCREEN_HEIGHT/3);
     glEnd();
 
-    // Bottom square
-    glBegin(GL_LINE_STRIP);
-    glVertex2f(2*SCREEN_WIDTH/3,2*SCREEN_HEIGHT/3);
-    glVertex2f(2*SCREEN_WIDTH/3,SCREEN_HEIGHT - 1);
-    glVertex2f(SCREEN_WIDTH/3,SCREEN_HEIGHT - 1);
-    glVertex2f(SCREEN_WIDTH/3,2*SCREEN_HEIGHT/3);
-    glVertex2f(2*SCREEN_WIDTH/3,2*SCREEN_HEIGHT/3);
-    glEnd();
-    
     // User drawn shadow
     if(mouseDrawLeftDown){
       glColor3f(0.6f, 0.98f, 0.95f); 
@@ -491,12 +484,12 @@ void displayDrawCB()
     } else {
       return;
     }
-      
+    
     glBegin(GL_POINTS);
-
     for( int i = 0; i < brushWidth; i++){
       for( int j = 0; j < brushWidth; j++){
-        glVertex2f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
+        if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
+            glVertex2f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
       }
     }
 
@@ -526,7 +519,6 @@ int main(int argc, char **argv)
 
     // init GLUT Draw window
     int drawWindow = initGLUTDraw(argc, argv);
-    //initGL();
     
     glutSetWindow(mainWindow);
 
