@@ -25,8 +25,15 @@ using std::ends;
 /////////////
 // GLOBALS //
 /////////////
+typedef std::vector<CompFab::Triangle> TriangleList;
 
-// Voxelized Lamp Mesh Data
+/* Voxelized Lamp Mesh Data for 3D PRINTING */
+// State of carved lamp represented by g_carvedLampMesh->activeTriangles, 
+// indices of the untouched triangles in the lamp. 
+//TODO: update saved obj file to only include active triangles
+Mesh g_carvedLampMesh;
+
+/* Voxelized Lamp Mesh Data for RENDERING */
 GLfloat *lamp_vertices;
 GLfloat *lamp_normals;
 GLushort *lamp_triangles;
@@ -35,6 +42,20 @@ GLuint vbo_vertices;
 GLuint vbo_normals;
 GLuint ibo_elements;
 
+/* Voxel Data Structure for Updating Lamp */
+CompFab::VoxelGrid *g_lampVoxelGrid;
+double gridSpacing;
+CompFab::Vec3 gridLLeft;
+int nx, ny, nz;
+
+// Triangles in the input lamp mesh - used for voxel intersection checking
+TriangleList g_inputLampTriangles;
+
+// Used by voxelizer from assn 0;
+TriangleList g_voxelTriangles;
+unsigned int voxelRes;
+
+/* Scene Data */
 // Position of the lamp (center) in the space
 float lamp_xpos;
 float lamp_ypos;
@@ -49,16 +70,6 @@ float room_dim;
 unsigned int vertices_size;
 unsigned int triangles_size;
 
-// Voxel Lamp Representation for 3d printing 
-CompFab::VoxelGrid *g_lampVoxelGrid;
-double gridSpacing;
-CompFab::Vec3 gridLLeft;
-int nx, ny, nz;
-
-// Used by voxelizer from assn 0;
-typedef std::vector<CompFab::Triangle> TriangleList;
-TriangleList g_voxelTriangles;
-unsigned int voxelRes;
 
 double detMat(double A11, double A12, double A13,
               double A21, double A22, double A23,
@@ -76,7 +87,7 @@ double detMat(double A11, double A12, double A13,
   Ray-Triangle Intersection
   @returns 1 if triangle and ray intersect, 0 otherwise
 */
-int rayTriangleIntersection(CompFab::Ray &ray, CompFab::Triangle &triangle)
+float rayTriangleIntersection(CompFab::Ray &ray, CompFab::Triangle &triangle)
 {
     CompFab::Vec3 e1(triangle.m_v2 - triangle.m_v1);
     CompFab::Vec3 e2(triangle.m_v3 - triangle.m_v1);
@@ -103,8 +114,7 @@ int rayTriangleIntersection(CompFab::Ray &ray, CompFab::Triangle &triangle)
     if( t <= 0.0 ){
       return 0;
     }
-    return 1;
-
+    return (float)t;
 }
 
 /*
@@ -203,12 +213,10 @@ void saveVoxelsToObj(const char * outfile)
                 CompFab::Vec3 box0 = coord - hspacing;
                 CompFab::Vec3 box1 = coord + hspacing;
                 makeCube(box, box0, box1);
-                int triIndex = mout.append(box);
-                //Denote the start index of the 12 triangles for this voxel
-                //the indices are contiguous
-                g_lampVoxelGrid->setTrianglesIndex(ii,jj,kk,triIndex);
+                mout.append(box);
             }
         }
+
     }
 
     mout.save_obj(outfile);
@@ -223,7 +231,6 @@ void triangulateVoxelGrid(const char * outfile)
     cout << "Trianglulating\n";
 
     Mesh box;
-    Mesh mout;
     CompFab::Vec3 hspacing(0.5*gridSpacing, 0.5*gridSpacing, 0.5*gridSpacing);
 
     for (int ii = 0; ii < nx; ii++) {
@@ -236,27 +243,40 @@ void triangulateVoxelGrid(const char * outfile)
                 CompFab::Vec3 box0 = coord - hspacing;
                 CompFab::Vec3 box1 = coord + hspacing;
                 makeCube(box, box0, box1);
-                mout.append(box);
+                int triIndex = g_carvedLampMesh.append(box);
+                //Denote the start index of the 12 triangles for this voxel
+                //the indices are contiguous
+                g_lampVoxelGrid->setTrianglesIndex(ii,jj,kk,triIndex);
             }
         }
     }
     // Compute the normals
-    mout.compute_norm();
-    mout.save_obj(outfile);
+    g_carvedLampMesh.compute_norm();
+    // Initialize the list of active triangles to be all
+    g_carvedLampMesh.init_active_triangles();
+
+    for(unsigned int tri =0; tri<g_carvedLampMesh->t.size(); ++tri)
+    {
+        v1 = g_carvedLampMesh->v[g_carvedLampMesh->t[tri][0]];
+        v2 = g_carvedLampMesh->v[g_carvedLampMesh->t[tri][1]];
+        v3 = g_carvedLampMesh->v[g_carvedLampMesh->t[tri][2]];
+        g_inputLampTriangles.push_back(CompFab::Triangle(v1,v2,v3));
+    }
+    g_carvedLampMesh.save_obj(outfile);
 
     GLfloat p1, p2, p3;
-    vertices_size = mout.v.size();
-    triangles_size = mout.t.size();
+    vertices_size = g_carvedLampMesh.v.size();
+    triangles_size = g_carvedLampMesh.t.size();
 
     //Populate the vertices and upload data
     lamp_vertices = new GLfloat[vertices_size*3];
     cout << "parsed triangles size: " << triangles_size << " " << "\n";
     cout << "parsed vertices size: " << vertices_size << " " << "\n";
-    for(unsigned int vert =0; vert<mout.v.size(); ++vert)
+    for(unsigned int vert =0; vert<g_carvedLampMesh.v.size(); ++vert)
     {
-        p1 = (GLfloat) mout.v[vert][0];
-        p2 = (GLfloat) mout.v[vert][1];
-        p3 = (GLfloat) mout.v[vert][2];
+        p1 = (GLfloat) g_carvedLampMesh.v[vert][0];
+        p2 = (GLfloat) g_carvedLampMesh.v[vert][1];
+        p3 = (GLfloat) g_carvedLampMesh.v[vert][2];
         lamp_vertices[vert*3] = p1;
         lamp_vertices[vert*3 + 1] = p2;
         lamp_vertices[vert*3 + 2] = p3;
@@ -267,12 +287,12 @@ void triangulateVoxelGrid(const char * outfile)
     glBufferData(GL_ARRAY_BUFFER, vertices_size*3*sizeof(GLfloat), lamp_vertices, GL_STREAM_DRAW); // upload data to video card
 
     //Populate the normals and upload data
-    lamp_normals = new GLfloat[(mout.n.size()*3)];
-    for(unsigned int norm =0; norm<mout.n.size(); ++norm)
+    lamp_normals = new GLfloat[(g_carvedLampMesh.n.size()*3)];
+    for(unsigned int norm =0; norm<g_carvedLampMesh.n.size(); ++norm)
     {
-        p1 = (GLfloat) mout.v[norm][0];
-        p2 = (GLfloat) mout.v[norm][1];
-        p3 = (GLfloat) mout.v[norm][2];
+        p1 = (GLfloat) g_carvedLampMesh.v[norm][0];
+        p2 = (GLfloat) g_carvedLampMesh.v[norm][1];
+        p3 = (GLfloat) g_carvedLampMesh.v[norm][2];
         lamp_normals[norm*3] = p1;
         lamp_normals[norm*3 + 1] = p2;
         lamp_normals[norm*3 + 2] = p3;
@@ -282,12 +302,12 @@ void triangulateVoxelGrid(const char * outfile)
     glBufferData(GL_ARRAY_BUFFER, vertices_size*3*sizeof(GLfloat), lamp_normals, GL_STREAM_DRAW); // upload data to video card
 
     //Populate the triangle indices and upload data
-    lamp_triangles = new GLushort[(mout.t.size()*3)];
-    for(unsigned int tri =0; tri<mout.t.size(); ++tri)
+    lamp_triangles = new GLushort[(g_carvedLampMesh.t.size()*3)];
+    for(unsigned int tri =0; tri<g_carvedLampMesh.t.size(); ++tri)
     {
-        p1 = (GLuint) mout.t[tri][0];
-        p2 = (GLuint) mout.t[tri][1];
-        p3 = (GLuint) mout.t[tri][2];
+        p1 = (GLuint) g_carvedLampMesh.t[tri][0];
+        p2 = (GLuint) g_carvedLampMesh.t[tri][1];
+        p3 = (GLuint) g_carvedLampMesh.t[tri][2];
         lamp_triangles[tri*3] = p1;
         lamp_triangles[tri*3 + 1] = p2;
         lamp_triangles[tri*3 + 2] = p3;
@@ -350,42 +370,74 @@ void createSceneData(float roomDim, float lightXPos, float lightYPos, float ligh
 //////////////
 // UPDATING //
 //////////////
+//TODO:
+inline void getNextVoxel(unsigned int *nextVoxelIndex, unsigned int triNum){
+}
+
+inline void addActiveTriangles(unsigned int start){
+    for(int i = start; i < start+12; i++){
+      g_carvedLampMesh->activeTriangles.insert(i);
+    }
+}
 /*
   @param ii, jj, kk - voxel containing the light source  
   @param shadePoint - the end point of the light ray
-  Returns the indices of the voxels intersected by the ray - in array of ints, each third
-  element is a new voxel.
+  Correctly updates the lamp mesh information for 3d printing and rendering
 */
-void voxelsIntersected(int ii, int jj, int kk, CompFab::Vec3 &shadePoint){
+void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add){
     std::vector<int> voxelIndices;
     CompFab::Vec3 vPos(gridLLeft.m_x + ((double)ii)*gridSpacing, gridLLeft.m_y + ((double)jj)*gridSpacing, gridLLeft.m_z +((double)kk)*gridSpacing);
     CompFab::Vec3 dir = (shadePoint - vPos).normalize();
     CompFab::RayStruct vRay = CompFab::RayStruct(voxelPos, dir);
 
 
-    int curr_i = ii;
-    int curr_j = jj;
-    int curr_k = kk;
-    // Continue until ray hits out side voxelgrid bounds
-    while(true){
-      if(curr_i > nx or curr_j > ny or curr_k > nz){
-        return voxelIndices;
-      }
-      //Check with current voxel: check triangles 
-      //TODO: use g_voxelTriangles
-      int triangleIndex = g_lampVoxelGrid->getFirstTriangle(ii, jj, kk);
-      for (unsigned int i = triangeIndex; i < triangeIndex + 12; i++){
-        
+    unsigned int curr_i = ii;
+    unsigned int curr_j = jj;
+    unsigned int curr_k = kk;
+    unsigned int startTriangle;
+    unsigned int nextVoxelIndex[3];
+    float prev_d, curr_d;       // rayTriangleIntersection dist to track entering/exit face
 
-      }
-      //Determine next voxel to check from current face
+
+    startTriangle = g_lampVoxelGrid->getFirstTriangle(ii, jj, kk);
+    for(unsigned int tri = triangleIndex; tri< triangleIndex + 12; ++tri)
+    {
+        prev_d = rayTriangleIntersection(vRay, g_inputLampTrianges[tri])
+        if(prev_d){
+            getNextVoxel(*nextVoxelIndex, (tri % 12));
+            if(g_inputLampGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
+               g_inputLampGrid->isCarved(curr_i, curr_j, curr_k) == 1){
+
+               addActiveTriangles(startTriangle);
+               //TODO: Update lamp_triangles
+            }
+            break;
+        }
     }
 
-    for(unsigned int i = 0; i < g_voxelTriangles.size(); i++){
-        CompFab::Triangle triangle = g_voxelTriangles[i];
-        if(rayTriangleIntersection(vRay, triangle) == 1){
-            numHits ++;
+    // Case 1:  ADD 
+    // Iterate until ray exits lamp bounds 
+    while(true){
+        if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 0)
+            return 0;
+
+        startTriangle = g_lampVoxelGrid->getFirstTriangle(ii, jj, kk);
+        for(unsigned int tri = triangleIndex; tri< triangleIndex + 12; ++tri)
+        {
+            // Figure out which voxel to examine next
+            curr_d = rayTriangleIntersection(vRay, g_inputLampTrianges[tri])
+            if(prev_d < curr_d){    // Check triangle exit face triangle
+                getNextVoxel(*nextVoxelIndex, (tri % 12));      //TODO: figure this out
+
+                if(g_inputLampGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
+                   g_inputLampGrid->isCarved(curr_i, curr_j, curr_k) == 1){
+                   addActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
+                   //TODO: Update lamp_triangles
+                }
+                break;
+            }
         }
+        prev_d = curr_d;
     }
 }
 

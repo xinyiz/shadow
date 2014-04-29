@@ -14,6 +14,8 @@ public:
   std::vector<CompFab::Vec3i>texId;
   ///@brief triangles
   std::vector<CompFab::Vec3i>t;
+  //triangles active in final mesh
+  std::set<int> activeTriangles;
 
   Mesh();
   Mesh(const std::vector<CompFab::Vec3>&_v,
@@ -31,6 +33,7 @@ public:
   void save_obj(const char * filename);
   void load_tex(const char * filename);
   
+  void init_active_triangles();
   void compute_norm();
   void rescale();
   //returns index of first triangle of newly added cube

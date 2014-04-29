@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <utility>
 #include <map>
+#include <set>
 #include <sstream>
 #include <string.h>
 //#include "util.h"
@@ -37,7 +38,6 @@ void makeCube(Mesh & m, const CompFab::Vec3 & mn,
     m.v[ii][0] = mn[0] + ss[0]*m.v[ii][0];
     m.v[ii][1] = mn[1] + ss[1]*m.v[ii][1];
     m.v[ii][2] = mn[2] + ss[2]*m.v[ii][2];
-
   }
 }
 
@@ -361,6 +361,12 @@ void Mesh::rescale()
       v[ii][dim]=v[ii][dim]*scale;
     }
   }
+}
+
+void Mesh::init_active_triangles(){
+    for(int i = 0; i < t.size(); i++){
+      activeTriangles.insert(activeTriangles.end(), i);
+    }
 }
 
 void Mesh::compute_norm()

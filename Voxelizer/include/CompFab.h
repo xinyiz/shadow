@@ -12,6 +12,7 @@
 #define EPSILON 1e-9
 
 #include <cmath>
+#include <set>
 
 namespace CompFab
 {
