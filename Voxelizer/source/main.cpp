@@ -443,6 +443,47 @@ void displayDrawCB()
     glOrtho (0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1);
     glMatrixMode (GL_MODELVIEW);
     glDisable(GL_DEPTH_TEST);
+
+    // Outline of 2D cutout of walls
+    glLineWidth(1.0);
+    glColor3f(1.0f, 1.0f, 1.0f); 
+    // Top square
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(SCREEN_WIDTH/3,0);
+    glVertex2f(2*SCREEN_WIDTH/3,0);
+    glVertex2f(2*SCREEN_WIDTH/3,SCREEN_HEIGHT/3);
+    glVertex2f(SCREEN_WIDTH/3, SCREEN_HEIGHT/3);
+    glVertex2f(SCREEN_WIDTH/3,0);
+    glEnd();
+
+    // Right square
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(2*SCREEN_WIDTH/3,SCREEN_HEIGHT/3);
+    glVertex2f(SCREEN_WIDTH,SCREEN_HEIGHT/3);
+    glVertex2f(SCREEN_WIDTH,2*SCREEN_HEIGHT/3);
+    glVertex2f(2*SCREEN_WIDTH/3, 2*SCREEN_HEIGHT/3);
+    glVertex2f(2*SCREEN_WIDTH/3,SCREEN_HEIGHT/3);
+    glEnd();
+    
+    // Left square
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(SCREEN_WIDTH/3,SCREEN_HEIGHT/3);
+    glVertex2f(0,SCREEN_HEIGHT/3);
+    glVertex2f(0,2*SCREEN_HEIGHT/3);
+    glVertex2f(SCREEN_WIDTH/3, 2*SCREEN_HEIGHT/3);
+    glVertex2f(SCREEN_WIDTH/3,SCREEN_HEIGHT/3);
+    glEnd();
+
+    // Bottom square
+    glBegin(GL_LINE_STRIP);
+    glVertex2f(2*SCREEN_WIDTH/3,2*SCREEN_HEIGHT/3);
+    glVertex2f(2*SCREEN_WIDTH/3,SCREEN_HEIGHT - 1);
+    glVertex2f(SCREEN_WIDTH/3,SCREEN_HEIGHT - 1);
+    glVertex2f(SCREEN_WIDTH/3,2*SCREEN_HEIGHT/3);
+    glVertex2f(2*SCREEN_WIDTH/3,2*SCREEN_HEIGHT/3);
+    glEnd();
+    
+    // User drawn shadow
     if(mouseDrawLeftDown){
       glColor3f(0.6f, 0.98f, 0.95f); 
     } else if(mouseDrawRightDown){
@@ -485,7 +526,7 @@ int main(int argc, char **argv)
 
     // init GLUT Draw window
     int drawWindow = initGLUTDraw(argc, argv);
-    initGL();
+    //initGL();
     
     glutSetWindow(mainWindow);
 
