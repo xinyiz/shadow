@@ -9,6 +9,7 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include <assert.h>
 #include "../include/CompFab.h"
 #include "../include/Mesh.h"
 #include "../include/vecmath/vecmath.h"
@@ -63,10 +64,14 @@ Mesh g_carvedLampMesh;
 GLfloat *lamp_vertices;
 GLfloat *lamp_normals;
 GLushort *lamp_triangles;
+GLushort *lamp_triangles_test;
+int numAct = 0;
+int numInact = 0;
 
 GLuint vbo_vertices;
 GLuint vbo_normals;
 GLuint ibo_elements;
+GLuint ibo_elements_test;
 
 /* Voxel Data Structure for Updating Lamp */
 CompFab::VoxelGrid *g_lampVoxelGrid;
@@ -265,6 +270,7 @@ void triangulateVoxelGrid(const char * outfile)
                 if(!g_lampVoxelGrid->isInside(ii,jj,kk)){
                   continue;
                 }
+                cout << "Voxel present:" << ii << "," << jj << "," << kk << "\n";
                 CompFab::Vec3 coord(((double)ii)*gridSpacing, ((double)jj)*gridSpacing, ((double)kk)*gridSpacing);
                 CompFab::Vec3 box0 = coord - hspacing;
                 CompFab::Vec3 box1 = coord + hspacing;
@@ -293,6 +299,7 @@ void triangulateVoxelGrid(const char * outfile)
 
     //TODO: testing - remove
     CompFab::Vec3 spoint(5.1,5.3,5.4);
+    //CompFab::Vec3 spoint(gridLLeft.m_x + ((double)3)*gridSpacing, gridLLeft.m_y + ((double)3)*gridSpacing, 6 + gridLLeft.m_z +((double)3)*gridSpacing);
     voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, false);
 
     g_carvedLampMesh.save_obj(outfile);
@@ -334,18 +341,35 @@ void triangulateVoxelGrid(const char * outfile)
 
     //Populate the triangle indices and upload data
     lamp_triangles = new GLushort[(g_carvedLampMesh.t.size()*3)];
+    lamp_triangles_test = new GLushort[(g_carvedLampMesh.t.size()*3)];
     for(unsigned int tri =0; tri<g_carvedLampMesh.t.size(); ++tri)
     {
         p1 = (GLuint) g_carvedLampMesh.t[tri][0];
         p2 = (GLuint) g_carvedLampMesh.t[tri][1];
         p3 = (GLuint) g_carvedLampMesh.t[tri][2];
-        lamp_triangles[tri*3] = p1;
-        lamp_triangles[tri*3 + 1] = p2;
-        lamp_triangles[tri*3 + 2] = p3;
+      if(g_carvedLampMesh.activeTriangles.find(tri) != g_carvedLampMesh.activeTriangles.end())
+      {
+        lamp_triangles[numAct*3] = p1;
+        lamp_triangles[numAct*3 + 1] = p2;
+        lamp_triangles[numAct*3 + 2] = p3;
+        numAct+=1;
+      } else {
+        cout << "Triangle inactive: " << tri << "\n";
+        lamp_triangles_test[numInact*3] = p1;
+        lamp_triangles_test[numInact*3 + 1] = p2;
+        lamp_triangles_test[numInact*3 + 2] = p3;
+        numInact+=1;
+      }
+
     }
+    assert((numAct + numInact) == triangles_size);
     glGenBuffers(1, &ibo_elements);                        // create a vbo
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);                    // activate vbo id to use
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangles_size*3*sizeof(GLushort), lamp_triangles, GL_STREAM_DRAW); // upload data to video card
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numAct*3*sizeof(GLushort), lamp_triangles, GL_STREAM_DRAW); // upload data to video card
+
+    glGenBuffers(1, &ibo_elements_test);                        // create a vbo
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements_test);                    // activate vbo id to use
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numInact*3*sizeof(GLushort), lamp_triangles_test, GL_STREAM_DRAW); // upload data to video card
 }
 
 /*
@@ -582,7 +606,7 @@ void displayCB()
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     initLights();
-    glColor4f(0.4f, 0.8f, 0.95f, 0.3f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
     // Draw the lamp////////////////////////////////////////////////////////////
     // Set vertex data
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -594,8 +618,13 @@ void displayCB()
     glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
     glNormalPointer(GL_FLOAT, 0, 0);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);
-    glDrawElements(GL_TRIANGLES, triangles_size*3, GL_UNSIGNED_SHORT, 0);
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);
+    //glDrawElements(GL_TRIANGLES, numAct*3, GL_UNSIGNED_SHORT, 0);
+
+    glColor4f(0.95f, 0.5f, 0.0f, 1.0f);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements_test);
+    glDrawElements(GL_TRIANGLES, numInact*3, GL_UNSIGNED_SHORT, 0);
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     // Draw the cubic room//////////////////////////////////////////////////////

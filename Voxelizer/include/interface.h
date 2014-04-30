@@ -22,7 +22,9 @@ const int BRUSH_WIDTH = 10;
 // Lamp mesh data 
 extern GLuint vbo_vertices;
 extern GLuint vbo_normals;
+extern GLuint vbo_colors;
 extern GLuint ibo_elements;
+extern GLuint ibo_elements_test;
 
 // Lamp placement
 extern float lamp_xpos;
