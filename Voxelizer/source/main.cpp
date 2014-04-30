@@ -298,8 +298,8 @@ void triangulateVoxelGrid(const char * outfile)
     }
 
     //TODO: testing - remove
-    CompFab::Vec3 spoint(5.1,5.3,5.4);
-    //CompFab::Vec3 spoint(gridLLeft.m_x + ((double)3)*gridSpacing, gridLLeft.m_y + ((double)3)*gridSpacing, 6 + gridLLeft.m_z +((double)3)*gridSpacing);
+    //CompFab::Vec3 spoint(5.1,5.3,5.4);
+    CompFab::Vec3 spoint(gridLLeft.m_x + ((double)3)*gridSpacing, gridLLeft.m_y + ((double)3)*gridSpacing, 6 + gridLLeft.m_z +((double)3)*gridSpacing);
     voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, false);
 
     g_carvedLampMesh.save_obj(outfile);
@@ -354,7 +354,6 @@ void triangulateVoxelGrid(const char * outfile)
         lamp_triangles[numAct*3 + 2] = p3;
         numAct+=1;
       } else {
-        cout << "Triangle inactive: " << tri << "\n";
         lamp_triangles_test[numInact*3] = p1;
         lamp_triangles_test[numInact*3 + 1] = p2;
         lamp_triangles_test[numInact*3 + 2] = p3;
@@ -433,7 +432,6 @@ void createSceneData(float roomDim, float lightXPos, float lightYPos, float ligh
 
 
 inline void updateNextVoxel(unsigned int &curr_i, unsigned int &curr_j, unsigned int &curr_k, unsigned int tri){
-    cout << "triangle:" << tri << "\n";
     curr_i = curr_i + nextVoxelLookup[tri*3];
     curr_j = curr_j + nextVoxelLookup[tri*3 + 1];
     curr_k = curr_k + nextVoxelLookup[tri*3 + 2];
@@ -468,7 +466,6 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
     unsigned int curr_j = jj;
     unsigned int curr_k = kk;
     unsigned int startTriangle;
-    unsigned int nextVoxelIndex[3];
     float prev_d, curr_d;       // rayTriangleIntersection dist to track entering/exit face
 
 
@@ -477,11 +474,20 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
     {
         prev_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
         if(prev_d){
-            updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
-            if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
-               g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 1){
-               addActiveTriangles(startTriangle);
+            if(add){
+                if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
+                   g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 1){
+                    addActiveTriangles(startTriangle);          //Update g_carvedLampMesh
+                    cout << "Adding Triangles start at: " << startTriangle << "\n";
+                }
+            } else {
+                if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
+                   g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 0){
+                    removeActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
+                    cout << "Removing Triangles start at: " << startTriangle << "\n";
+                }
             }
+            updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
             break;
         }
     }
@@ -489,6 +495,7 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
     // Case 1:  ADD 
     // Iterate until ray exits lamp bounds 
     if(add){
+        cout << "Adding back voxels in ray path...\n";
         while(true){
             if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 0)
                 return;
@@ -499,20 +506,20 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
                 // Figure out which voxel to examine next
                 curr_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
                 if(prev_d < curr_d){    // Check triangle exit face triangle
-                    updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
                     if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                        g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 1){
-                       addActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
+                        addActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
+                        cout << "Adding Triangles start at: " << startTriangle << "\n";
                     }
+                    updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
                     break;
                 }
             }
             prev_d = curr_d;
         }
     } else{ // Case 2:  REMOVE 
-        cout << "Removing voxels in ray path\n";
+        cout << "Removing voxels in ray path...\n";
         while(true){
-            cout << "Start voxel: " << ii << "," << jj << "," << kk << "\n";
             cout << "Curr voxel: " << curr_i << "," << curr_j << "," << curr_k << "\n";
             if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 0)
                 return;
@@ -523,15 +530,15 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
                 // Figure out which voxel to examine next
 
                 curr_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
-                cout << "prev d curr d:" <<  prev_d << "," << curr_d << "\n";
-                cout << "startT:" << tri << "\n";
+                cout << "prev_d curr_d:" <<  prev_d << "," << curr_d << "\n";
+                cout << "start triangle:" << tri << "\n";
                 if(prev_d < curr_d){    // Check triangle exit face triangle
-                    updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
                     if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                        g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 0){
                         cout << "Removing Triangles start at: " << startTriangle << "\n";
                         removeActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
                     }
+                    updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
                     break;
                 }
             }
@@ -621,7 +628,7 @@ void displayCB()
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);
     //glDrawElements(GL_TRIANGLES, numAct*3, GL_UNSIGNED_SHORT, 0);
 
-    glColor4f(0.95f, 0.5f, 0.0f, 1.0f);
+    glColor4f(0.95f, 0.0f, 0.0f, 1.0f);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements_test);
     glDrawElements(GL_TRIANGLES, numInact*3, GL_UNSIGNED_SHORT, 0);
