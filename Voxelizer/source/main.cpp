@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <vector>
 #include <assert.h>
+#include <ctime>
 #include "../include/CompFab.h"
 #include "../include/Mesh.h"
 #include "../include/vecmath/vecmath.h"
@@ -259,7 +260,7 @@ void saveVoxelsToObj(const char * outfile)
 */
 void triangulateVoxelGrid(const char * outfile)
 {
-    cout << "Trianglulating\n";
+    cout << "Triangulating\n";
 
     Mesh box;
     CompFab::Vec3 hspacing(0.5*gridSpacing, 0.5*gridSpacing, 0.5*gridSpacing);
@@ -270,7 +271,6 @@ void triangulateVoxelGrid(const char * outfile)
                 if(!g_lampVoxelGrid->isInside(ii,jj,kk)){
                   continue;
                 }
-                cout << "Voxel present:" << ii << "," << jj << "," << kk << "\n";
                 CompFab::Vec3 coord(((double)ii)*gridSpacing, ((double)jj)*gridSpacing, ((double)kk)*gridSpacing);
                 CompFab::Vec3 box0 = coord - hspacing;
                 CompFab::Vec3 box1 = coord + hspacing;
@@ -278,17 +278,26 @@ void triangulateVoxelGrid(const char * outfile)
                 int triIndex = g_carvedLampMesh.append(box);
                 //Denote the start index of the 12 triangles for this voxel
                 //the indices are contiguous
+                if( ii == 21 && jj == 21 && kk == 20){
+                    cout << "TARGET 1: " << triIndex;
+                }
+                if( ii == 21 && jj == 20 && kk == 21){
+                    cout << "TARGET 2: " << triIndex;
+                }
                 g_lampVoxelGrid->setTrianglesIndex(ii,jj,kk,triIndex);
             }
         }
     }
     // Compute the normals
+    cout << "Computing normals...\n";
     g_carvedLampMesh.compute_norm();
     // Initialize the list of active triangles to be all
+    cout << "Initializing active triangles...\n";
     g_carvedLampMesh.init_active_triangles();
 
     CompFab::Vec3 v1,v2,v3;
 
+    cout << "Inserting into inputLampTriangles...\n";
     for(unsigned int tri =0; tri<g_carvedLampMesh.t.size(); ++tri)
     {
         v1 = g_carvedLampMesh.v[g_carvedLampMesh.t[tri][0]];
@@ -297,11 +306,20 @@ void triangulateVoxelGrid(const char * outfile)
         g_inputLampTriangles.push_back(CompFab::Triangle(v1,v2,v3));
     }
 
+    cout << "Testing...\n";
     //TODO: testing - remove
+    // jitter the ray
+    srand(time(NULL));
+    float rand1 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
+    float rand2 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
+    float rand3 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
+    cout << "Random nums:" << rand1 << "," << rand2 << "," << rand3;
+    CompFab::Vec3 spoint(5.0+rand1,5.0+rand2,5.0+rand3);
     //CompFab::Vec3 spoint(5.1,5.3,5.4);
-    CompFab::Vec3 spoint(gridLLeft.m_x + ((double)3)*gridSpacing, gridLLeft.m_y + ((double)3)*gridSpacing, 6 + gridLLeft.m_z +((double)3)*gridSpacing);
+    //CompFab::Vec3 spoint(gridLLeft.m_x + ((double)3)*gridSpacing + rand1, gridLLeft.m_y + ((double)3)*gridSpacing+rand2, 6 + gridLLeft.m_z +((double)3)*gridSpacing+rand3);
     voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, false);
 
+    cout << "Saving...\n";
     g_carvedLampMesh.save_obj(outfile);
 
     GLfloat p1, p2, p3;
@@ -470,9 +488,12 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
 
 
     startTriangle = g_lampVoxelGrid->getFirstTriangle(ii, jj, kk);
+    assert(g_lampVoxelGrid->isInside(ii,jj,kk));
+    cout << "Start from first voxel..." << ii << "," << jj << "," << kk << " triangle num " << startTriangle << "\n";
     for(unsigned int tri = startTriangle; tri< startTriangle + 12; ++tri)
     {
         prev_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
+        cout << "prev_d... " << prev_d << "\n";
         if(prev_d){
             if(add){
                 if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
@@ -530,8 +551,8 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
                 // Figure out which voxel to examine next
 
                 curr_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
-                cout << "prev_d curr_d:" <<  prev_d << "," << curr_d << "\n";
-                cout << "start triangle:" << tri << "\n";
+                //cout << "prev_d curr_d:" <<  prev_d << "," << curr_d << "\n";
+                //cout << "start triangle:" << tri << "\n";
                 if(prev_d < curr_d){    // Check triangle exit face triangle
                     if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                        g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 0){
