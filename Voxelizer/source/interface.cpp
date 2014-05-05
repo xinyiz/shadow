@@ -12,8 +12,11 @@ float cameraAngleX;
 float cameraAngleY;
 float cameraDistance;
 int brushWidth;
+int mainWindow;
+int drawWindow;
 std::vector<List> shadowPixels;
 List currShadowPixels;
+vector3fList convertedShadowPixels;
 
 ///////////////////////////////////////////////////////////////////////////////
 // initialize global variables
@@ -239,11 +242,16 @@ void mouseDrawCB(int button, int state, int x, int y)
               for( int j = 0; j < brushWidth; j++){
                 if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
                     currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+                    convertedShadowPixels.insert(Vector3f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j, 5));
               }
             }
             glutPostRedisplay();
             shadowPixels.push_back(currShadowPixels);
             mouseDrawLeftDown = false;
+            
+            glutSetWindow(mainWindow);
+            glutPostRedisplay();
+            glutSetWindow(drawWindow);
             //glColor3f(1.0f, 0.0f, 0.0f); 
             //glBegin(GL_POINTS);
             //List::iterator it;
@@ -270,6 +278,7 @@ void mouseDrawCB(int button, int state, int x, int y)
               for( int j = 0; j < brushWidth; j++){
                 if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
                     currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+                    convertedShadowPixels.insert(Vector3f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j, 5));
               }
             }
             glutPostRedisplay();
@@ -299,6 +308,7 @@ void mouseDrawMotionCB(int x, int y)
           for( int j = 0; j < brushWidth; j++){
             if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
                 currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+                convertedShadowPixels.insert(Vector3f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j, 5));
           }
         }
         glutPostRedisplay();

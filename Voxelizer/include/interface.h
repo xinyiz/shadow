@@ -7,6 +7,7 @@
 #include <vector>
 #include <set>
 #include <utility>
+#include "../include/vecmath/vecmath.h"
 
 ///////////////
 // CONSTANTS //
@@ -38,6 +39,7 @@ extern float light_ypos;
 extern float light_zpos;
 
 typedef std::pair<int, int> Point;
+typedef std::set<Vector3f> vector3fList;
 typedef std::set<Point> List;
 // Drawn shadow pixels
 // Sequence of pixel addition or removal actions. Each is a set of points to be 
@@ -46,6 +48,9 @@ typedef std::set<Point> List;
 extern std::vector<List> shadowPixels;
 // Tracking current pixel changes
 extern List currShadowPixels;
+
+// Tracking points to draw on walls in 3D coordinates
+extern vector3fList convertedShadowPixels;
 
 // Interface parameters
 extern int screenWidth;
@@ -60,6 +65,8 @@ extern float cameraAngleX;
 extern float cameraAngleY;
 extern float cameraDistance;
 extern int brushWidth;
+extern int mainWindow;
+extern int drawWindow;
 
 bool initSharedMem();
 void initLights();

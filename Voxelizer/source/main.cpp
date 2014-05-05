@@ -57,6 +57,8 @@ typedef std::vector<CompFab::Triangle> TriangleList;
 TriangleList g_voxelTriangles;
 unsigned int voxelRes;
 
+bool cleared = false;
+
 double detMat(double A11, double A12, double A13,
               double A21, double A22, double A23,
               double A31, double A32, double A33)
@@ -387,13 +389,24 @@ void room()
     glScalef(WALL_THICKNESS, room_dim, room_dim);
     glutSolidCube( 1.0 );
     glPopMatrix();
-    
+   
     /* back wall */
     glPushMatrix();
     glTranslatef(room_dim/2,room_dim/2,0);
     glScalef(room_dim, room_dim, WALL_THICKNESS);
     glutSolidCube( 1.0 );
     glPopMatrix();
+    
+
+    glColor3f(0.0f, 1.0f, 1.0f); 
+    glPointSize(5.0f);
+    glBegin(GL_POINTS);
+    //glVertex3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, .5f);
+    //glVertex3f(.9f, 1.0f, .5f);
+    //glVertex3f(.95f, 1.0f, .5f);
+    glVertex3f(0,0,room_dim);
+    glEnd();
 }
 
 /* 
@@ -417,6 +430,7 @@ void displayCB()
     initLights();
     // Draw the lamp////////////////////////////////////////////////////////////
     // Set vertex data
+    glColor3f(0.6f, 0.98f, 0.95f); 
     glEnableClientState(GL_VERTEX_ARRAY);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
     glVertexPointer(3, GL_FLOAT, 0, 0);
@@ -431,19 +445,35 @@ void displayCB()
 
     // Draw the cubic room//////////////////////////////////////////////////////
     room();
-
+  
+    // Draw points
+    glColor3f(1.0f, 0.0f, 0.0f); 
+    glBegin(GL_POINTS);
+    vector3fList::iterator it;
+    Vector3f point;
+    for(it = convertedShadowPixels.begin(); it != convertedShadowPixels.end(); ++it){
+      point = *it;
+      glVertex3f((point.x()-SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), 0, (point.y()-SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
+    }
+    glEnd();
+    
     glPopMatrix();
     glutSwapBuffers();
 }
 
 void displayDrawCB()
 {
+    //if (!cleared){
+    //    cleared = true;
+    //    glClear(GL_COLOR_BUFFER_BIT);
+    //}
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
     glOrtho (0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1);
     glMatrixMode (GL_MODELVIEW);
     glDisable(GL_DEPTH_TEST);
     
+     
     glColor3f(0.7f, 0.7f, 0.7f); 
     glBegin(GL_QUADS);
     // Top left
@@ -514,11 +544,11 @@ int main(int argc, char **argv)
     std::cout<<"Light position: "<< argv[5] << "," << argv[6] << "," << argv[7] <<"\n";
     initSharedMem();
     // init GLUT and GL
-    int mainWindow = initGLUT(argc, argv);
+    mainWindow = initGLUT(argc, argv);
     initGL();
 
     // init GLUT Draw window
-    int drawWindow = initGLUTDraw(argc, argv);
+    drawWindow = initGLUTDraw(argc, argv);
     
     glutSetWindow(mainWindow);
 
