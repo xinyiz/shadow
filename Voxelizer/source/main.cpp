@@ -64,15 +64,20 @@ Mesh g_carvedLampMesh;
 /* Voxelized Lamp Mesh Data for RENDERING */
 GLfloat *lamp_vertices;
 GLfloat *lamp_normals;
-GLushort *lamp_triangles;
-GLushort *lamp_triangles_test;
+std::vector<Glushort*> lamp_active_triangles;
+std::vector<Glushort*> lamp_inactive_triangles;
+unsigned int num_chunks = 1; //if vertices array too large
+//GLushort *lamp_triangles;
+//GLushort *lamp_triangles_test;
 int numAct = 0;
 int numInact = 0;
 
 GLuint vbo_vertices;
 GLuint vbo_normals;
-GLuint ibo_elements;
-GLuint ibo_elements_test;
+std::vector<Gluint> ibo_active_elements;
+std::vector<Gluint> ibo_inactive_elements;
+//GLuint ibo_elements;
+//GLuint ibo_elements_test;
 
 /* Voxel Data Structure for Updating Lamp */
 CompFab::VoxelGrid *g_lampVoxelGrid;
@@ -260,7 +265,7 @@ void saveVoxelsToObj(const char * outfile)
 */
 void triangulateVoxelGrid(const char * outfile)
 {
-    cout << "Triangulating\n";
+    cout << "Triangulating..\n";
 
     Mesh box;
     CompFab::Vec3 hspacing(0.5*gridSpacing, 0.5*gridSpacing, 0.5*gridSpacing);
@@ -278,12 +283,6 @@ void triangulateVoxelGrid(const char * outfile)
                 int triIndex = g_carvedLampMesh.append(box);
                 //Denote the start index of the 12 triangles for this voxel
                 //the indices are contiguous
-                if( ii == 21 && jj == 21 && kk == 20){
-                    cout << "TARGET 1: " << triIndex;
-                }
-                if( ii == 21 && jj == 20 && kk == 21){
-                    cout << "TARGET 2: " << triIndex;
-                }
                 g_lampVoxelGrid->setTrianglesIndex(ii,jj,kk,triIndex);
             }
         }
@@ -314,9 +313,7 @@ void triangulateVoxelGrid(const char * outfile)
     float rand2 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
     float rand3 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
     cout << "Random nums:" << rand1 << "," << rand2 << "," << rand3;
-    CompFab::Vec3 spoint(5.0+rand1,5.0+rand2,5.0+rand3);
-    //CompFab::Vec3 spoint(5.1,5.3,5.4);
-    //CompFab::Vec3 spoint(gridLLeft.m_x + ((double)3)*gridSpacing + rand1, gridLLeft.m_y + ((double)3)*gridSpacing+rand2, 6 + gridLLeft.m_z +((double)3)*gridSpacing+rand3);
+    CompFab::Vec3 spoint(5.0f + rand1, 5.0f + rand2, 5.0f + rand3);
     voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, false);
 
     cout << "Saving...\n";
@@ -357,36 +354,80 @@ void triangulateVoxelGrid(const char * outfile)
     glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);                    // activate vbo id to use
     glBufferData(GL_ARRAY_BUFFER, vertices_size*3*sizeof(GLfloat), lamp_normals, GL_STREAM_DRAW); // upload data to video card
 
+    if(vertices_size > 65536){
+        num_chunks = (int)ceil(vertices_size*1.0f/65536.0f);
+        cout << "vertices size: " << vertices_size << " too large, breaking into " << 
+        num_chunks << " chunks for rendering\n";    
+    }
     //Populate the triangle indices and upload data
-    lamp_triangles = new GLushort[(g_carvedLampMesh.t.size()*3)];
-    lamp_triangles_test = new GLushort[(g_carvedLampMesh.t.size()*3)];
-    for(unsigned int tri =0; tri<g_carvedLampMesh.t.size(); ++tri)
-    {
-        p1 = (GLuint) g_carvedLampMesh.t[tri][0];
-        p2 = (GLuint) g_carvedLampMesh.t[tri][1];
-        p3 = (GLuint) g_carvedLampMesh.t[tri][2];
-      if(g_carvedLampMesh.activeTriangles.find(tri) != g_carvedLampMesh.activeTriangles.end())
-      {
-        lamp_triangles[numAct*3] = p1;
-        lamp_triangles[numAct*3 + 1] = p2;
-        lamp_triangles[numAct*3 + 2] = p3;
-        numAct+=1;
-      } else {
-        lamp_triangles_test[numInact*3] = p1;
-        lamp_triangles_test[numInact*3 + 1] = p2;
-        lamp_triangles_test[numInact*3 + 2] = p3;
-        numInact+=1;
-      }
+    GLushort *act_triangles;
+    GLushort *inact_triangles;
+    for(unsigned int ch = 0; ch < num_chunks; ch++){
+        act_triangles = new GLushort[65536];
+        inact_triangles_test = new GLushort[65536];
+        lamp_active_triangles.push_back(act_triangles);
+        lamp_active_triangles.push_back(inact_triangles);
+    }
+    int chunk;
+    int index;
+    for(unsigned int ch = 0; ch < num_chunks; ch++){
+        for(unsigned int tri =0; tri<g_carvedLampMesh.t.size(); ++tri)
+        {
+            chunk = tri/65536; 
+            p1 = (GLuint) g_carvedLampMesh.t[tri][0];
+            p2 = (GLuint) g_carvedLampMesh.t[tri][1];
+            p3 = (GLuint) g_carvedLampMesh.t[tri][2];
 
+          if(g_carvedLampMesh.activeTriangles.find(tri) != g_carvedLampMesh.activeTriangles.end())
+          {
+            index = numAct % 65536;
+            lamp_active_triangles[chunk][index*3] = p1;
+            lamp_active_triangles[chunk][index*3 + 1] = p2;
+            lamp_active_triangles[chunk][index*3 + 2] = p3;
+            //lamp_triangles[numAct*3] = p1;
+            //lamp_triangles[numAct*3 + 1] = p2;
+            //lamp_triangles[numAct*3 + 2] = p3;
+            numAct+=1;
+          } else {
+            index = numInact % 65536;
+            lamp_inactive_triangles[chunk][index*3] = p1;
+            lamp_inactive_triangles[chunk][index*3 + 1] = p2;
+            lamp_inactive_triangles[chunk][index*3 + 2] = p3;
+            //lamp_triangles_test[numInact*3] = p1;
+            //lamp_triangles_test[numInact*3 + 1] = p2;
+            //lamp_triangles_test[numInact*3 + 2] = p3;
+            numInact+=1;
+          }
+
+        }
     }
     assert((numAct + numInact) == triangles_size);
-    glGenBuffers(1, &ibo_elements);                        // create a vbo
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);                    // activate vbo id to use
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numAct*3*sizeof(GLushort), lamp_triangles, GL_STREAM_DRAW); // upload data to video card
 
-    glGenBuffers(1, &ibo_elements_test);                        // create a vbo
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements_test);                    // activate vbo id to use
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numInact*3*sizeof(GLushort), lamp_triangles_test, GL_STREAM_DRAW); // upload data to video card
+    // Create active elements 
+
+    GLuint ibo_element;
+    for(unsigned int i = 0; i < lamp_active_triangles.size(); i++){
+        ibo_active_elements.push_back(&ibo_element);  
+        glGenBuffers(1, ibo_active_elements[i]);                        // create a vbo
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_active_elements[i]);                    // activate vbo id to use
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, 65536*3*sizeof(GLushort), lamp_active_triangles[i], GL_STREAM_DRAW); // upload data to video card
+
+    }
+    //glGenBuffers(1, &ibo_elements);                        // create a vbo
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);                    // activate vbo id to use
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, numAct*3*sizeof(GLushort), lamp_triangles, GL_STREAM_DRAW); // upload data to video card
+
+    GLuint ibo_ielement;
+    for(unsigned int i = 0; i < lamp_inactive_triangles.size(); i++){
+        ibo_inactive_elements.push_back(&ibo_ielement);  
+        glGenBuffers(1, ibo_inactive_elements[i]);                        // create a vbo
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_inactive_elements[i]);                    // activate vbo id to use
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, 65536*3*sizeof(GLushort), lamp_inactive_triangles[i], GL_STREAM_DRAW); // upload data to video card
+    }
+
+    //glGenBuffers(1, &ibo_elements_test);                        // create a vbo
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements_test);                    // activate vbo id to use
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, numInact*3*sizeof(GLushort), lamp_triangles_test, GL_STREAM_DRAW); // upload data to video card
 }
 
 /*
@@ -457,11 +498,13 @@ inline void updateNextVoxel(unsigned int &curr_i, unsigned int &curr_j, unsigned
 
 inline void addActiveTriangles(unsigned int start){
     for(int i = start; i < start+12; i++){
+      //cout << "Adding Triangles start at: " << startTriangle << "\n";
       g_carvedLampMesh.activeTriangles.insert(i);
     }
 }
 
 inline void removeActiveTriangles(unsigned int start){
+    //cout << "Removing Triangles start at: " << startTriangle << "\n";
     for(int i = start; i < start+12; i++){
       g_carvedLampMesh.activeTriangles.erase(i);
     }
@@ -493,19 +536,16 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
     for(unsigned int tri = startTriangle; tri< startTriangle + 12; ++tri)
     {
         prev_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
-        cout << "prev_d... " << prev_d << "\n";
         if(prev_d){
             if(add){
                 if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                    g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 1){
                     addActiveTriangles(startTriangle);          //Update g_carvedLampMesh
-                    cout << "Adding Triangles start at: " << startTriangle << "\n";
                 }
             } else {
                 if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                    g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 0){
                     removeActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
-                    cout << "Removing Triangles start at: " << startTriangle << "\n";
                 }
             }
             updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
@@ -530,7 +570,6 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
                     if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                        g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 1){
                         addActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
-                        cout << "Adding Triangles start at: " << startTriangle << "\n";
                     }
                     updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
                     break;
@@ -541,7 +580,7 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
     } else{ // Case 2:  REMOVE 
         cout << "Removing voxels in ray path...\n";
         while(true){
-            cout << "Curr voxel: " << curr_i << "," << curr_j << "," << curr_k << "\n";
+            cout << "voxel: " << curr_i << "," << curr_j << "," << curr_k << "\n";
             if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 0)
                 return;
 
@@ -551,12 +590,9 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
                 // Figure out which voxel to examine next
 
                 curr_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
-                //cout << "prev_d curr_d:" <<  prev_d << "," << curr_d << "\n";
-                //cout << "start triangle:" << tri << "\n";
                 if(prev_d < curr_d){    // Check triangle exit face triangle
                     if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                        g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 0){
-                        cout << "Removing Triangles start at: " << startTriangle << "\n";
                         removeActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
                     }
                     updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
@@ -636,23 +672,35 @@ void displayCB()
     initLights();
     glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
     // Draw the lamp////////////////////////////////////////////////////////////
-    // Set vertex data
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
-    glVertexPointer(3, GL_FLOAT, 0, 0);
-    
-    // Set normal data
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
-    glNormalPointer(GL_FLOAT, 0, 0);
 
+    // If vertex buffer size > 131071, need to draw twice.
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+
+    for (int i=0; i < lamp_active_triangles.size(); i++){
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
+        glVertexPointer(3, GL_FLOAT, 0, i*65536);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
+        glNormalPointer(GL_FLOAT, 0, i*65536);
+
+
+        glColor4f(0.95f, 0.0f, 0.0f, 1.0f);
+        
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_active_elements[i]);
+        glDrawElements(GL_TRIANGLES, 65536, GL_UNSIGNED_SHORT, 0);
+
+    }
+    //Render active triangles
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);
     //glDrawElements(GL_TRIANGLES, numAct*3, GL_UNSIGNED_SHORT, 0);
 
-    glColor4f(0.95f, 0.0f, 0.0f, 1.0f);
+    // Set vertex data
+    
+    // Set normal data
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements_test);
-    glDrawElements(GL_TRIANGLES, numInact*3, GL_UNSIGNED_SHORT, 0);
+
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     // Draw the cubic room//////////////////////////////////////////////////////
