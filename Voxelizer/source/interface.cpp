@@ -12,8 +12,11 @@ float cameraAngleX;
 float cameraAngleY;
 float cameraDistance;
 int brushWidth;
+int mainWindow;
+int drawWindow;
 std::vector<List> shadowPixels;
 List currShadowPixels;
+vector3fList convertedShadowPixels;
 
 ///////////////////////////////////////////////////////////////////////////////
 // initialize global variables
@@ -24,6 +27,7 @@ bool initSharedMem()
     screenHeight = SCREEN_HEIGHT;
     mouseLeftDown = mouseRightDown = false;
     mouseX = mouseY = 0;
+    drawX = drawY = 0;
     cameraAngleX = cameraAngleY = 0.0f;
     cameraDistance = room_dim*2.0f;
     brushWidth = BRUSH_WIDTH;
@@ -74,6 +78,22 @@ void toPerspective()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// return true if point is within bounds of room
+///////////////////////////////////////////////////////////////////////////////
+bool isValidPoint(int x, int y)
+{
+  if ((x < SCREEN_WIDTH/3 && y < SCREEN_HEIGHT/3) || 
+      (x > 2*SCREEN_WIDTH/3 && y < SCREEN_HEIGHT/3) || 
+      (x < SCREEN_WIDTH/3 && y > 2*SCREEN_HEIGHT/3) || 
+      (x > 2*SCREEN_WIDTH/3 && y > 2*SCREEN_HEIGHT/3)) 
+  {
+    return false;
+  }
+  
+  return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // initialize GLUT for windowing
 ///////////////////////////////////////////////////////////////////////////////
 int initGLUT(int argc, char **argv)
@@ -98,15 +118,18 @@ int initGLUT(int argc, char **argv)
     return handle;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// initialize GLUT for draw window
+///////////////////////////////////////////////////////////////////////////////
 int initGLUTDraw(int argc, char **argv)
 {
-	int drawHandle = glutCreateWindow("Draw Shadow");
-	glutSetWindow(drawHandle);
-	glutDisplayFunc(displayDrawCB); 
-	glutTimerFunc(300, timerDrawCB, 300);
-  glutReshapeFunc(reshapeCB);
-  glutMouseFunc(mouseDrawCB);
-  glutMotionFunc(mouseDrawMotionCB);
+    int drawHandle = glutCreateWindow("Draw Shadow");
+    glutSetWindow(drawHandle);
+    glutDisplayFunc(displayDrawCB); 
+    glutTimerFunc(30, timerDrawCB, 30);
+    glutReshapeFunc(reshapeCB);
+    glutMouseFunc(mouseDrawCB);
+    glutMotionFunc(mouseDrawMotionCB);
     
     return drawHandle;
 }
@@ -219,14 +242,18 @@ void mouseDrawCB(int button, int state, int x, int y)
             drawY = y;
             for( int i = 0; i < brushWidth; i++){
               for( int j = 0; j < brushWidth; j++){
-                currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+                if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
+                    currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+                    convertedShadowPixels.insert(Vector3f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j, 5));
               }
             }
             glutPostRedisplay();
-
             shadowPixels.push_back(currShadowPixels);
             mouseDrawLeftDown = false;
-
+            
+            glutSetWindow(mainWindow);
+            glutPostRedisplay();
+            glutSetWindow(drawWindow);
             //glColor3f(1.0f, 0.0f, 0.0f); 
             //glBegin(GL_POINTS);
             //List::iterator it;
@@ -251,7 +278,9 @@ void mouseDrawCB(int button, int state, int x, int y)
             drawY = y;
             for( int i = 0; i < brushWidth; i++){
               for( int j = 0; j < brushWidth; j++){
-                currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+                if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
+                    currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+                    convertedShadowPixels.insert(Vector3f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j, 5));
               }
             }
             glutPostRedisplay();
@@ -279,7 +308,9 @@ void mouseDrawMotionCB(int x, int y)
         drawY = y;
         for( int i = 0; i < brushWidth; i++){
           for( int j = 0; j < brushWidth; j++){
-            currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+            if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
+                currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+                convertedShadowPixels.insert(Vector3f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j, 5));
           }
         }
         glutPostRedisplay();
@@ -290,7 +321,8 @@ void mouseDrawMotionCB(int x, int y)
         drawY = y;
         for( int i = 0; i < brushWidth; i++){
           for( int j = 0; j < brushWidth; j++){
-            currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+            if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
+                currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
           }
         }
         glutPostRedisplay();
