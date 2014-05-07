@@ -615,17 +615,7 @@ void room()
     glScalef(room_dim, room_dim, WALL_THICKNESS);
     glutSolidCube( 1.0 );
     glPopMatrix();
-    
 
-    glColor3f(0.0f, 1.0f, 1.0f); 
-    glPointSize(5.0f);
-    glBegin(GL_POINTS);
-    //glVertex3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(1.0f, 1.0f, .5f);
-    //glVertex3f(.9f, 1.0f, .5f);
-    //glVertex3f(.95f, 1.0f, .5f);
-    glVertex3f(0,0,room_dim);
-    glEnd();
 }
 
 /* 
@@ -674,12 +664,13 @@ void displayCB()
   
     // Draw points
     glColor3f(1.0f, 0.0f, 0.0f); 
+    glPointSize(5.0f);
     glBegin(GL_POINTS);
-    vector3fList::iterator it;
+    std::set<Vector3f>::iterator it;
     Vector3f point;
-    for(it = convertedShadowPixels.begin(); it != convertedShadowPixels.end(); ++it){
+    for(it = pointsToDraw.begin(); it != pointsToDraw.end(); ++it){
       point = *it;
-      glVertex3f((point.x()-SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), 0, (point.y()-SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
+      glVertex3f(point.x(), point.y(), point.z());
     }
     glEnd();
     

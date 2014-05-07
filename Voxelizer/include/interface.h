@@ -8,6 +8,7 @@
 #include <set>
 #include <utility>
 #include "../include/vecmath/vecmath.h"
+#include "../include/concQueue.h"
 
 ///////////////
 // CONSTANTS //
@@ -40,19 +41,16 @@ extern float light_xpos;
 extern float light_ypos;
 extern float light_zpos;
 
-typedef std::pair<int, int> Point;
-typedef std::set<Vector3f> vector3fList;
-typedef std::set<Point> List;
+typedef std::set<Vector3f> List;
 // Drawn shadow pixels
-// Sequence of pixel addition or removal actions. Each is a set of points to be 
+// Sequence of point addition or removal actions. Each is a set of points to be 
 // added or removed for the action. Addition actions are indicated by prescence 
 // of (-1,-1) pair in set,  (-2, -2) for removal
-extern std::vector<List> shadowPixels;
+extern Queue<List> shadowPixels;
 // Tracking current pixel changes
 extern List currShadowPixels;
-
-// Tracking points to draw on walls in 3D coordinates
-extern vector3fList convertedShadowPixels;
+// Points for drawing shadow in room 
+extern std::set<Vector3f> pointsToDraw; 
 
 // Interface parameters
 extern int screenWidth;
@@ -61,8 +59,8 @@ extern bool mouseLeftDown;
 extern bool mouseRightDown;
 extern bool mouseDrawLeftDown;
 extern bool mouseDrawRightDown;
-extern float mouseX, mouseY;
-extern float drawX, drawY;
+extern int mouseX, mouseY;
+extern int drawX, drawY;
 extern float cameraAngleX;
 extern float cameraAngleY;
 extern float cameraDistance;
@@ -84,6 +82,7 @@ void timerCB(int millisec);
 void timerDrawCB(int millisec);
 void reshapeCB(int w, int h);
 void mouseCB(int button, int stat, int x, int y);
+Vector3f convertTo3DPoint(int x, int y);
 void mouseDrawCB(int button, int stat, int x, int y);
 void mouseMotionCB(int x, int y);
 void mouseDrawMotionCB(int x, int y);

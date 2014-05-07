@@ -6,17 +6,17 @@ bool mouseLeftDown;
 bool mouseRightDown;
 bool mouseDrawLeftDown;
 bool mouseDrawRightDown;
-float mouseX, mouseY;
-float drawX, drawY;
+int mouseX, mouseY;
+int drawX, drawY;
 float cameraAngleX;
 float cameraAngleY;
 float cameraDistance;
 int brushWidth;
 int mainWindow;
 int drawWindow;
-std::vector<List> shadowPixels;
+Queue<List> shadowPixels;
 List currShadowPixels;
-vector3fList convertedShadowPixels;
+std::set<Vector3f> pointsToDraw;
 
 ///////////////////////////////////////////////////////////////////////////////
 // initialize global variables
@@ -223,7 +223,11 @@ void mouseMotionCB(int x, int y)
         mouseY = y;
     }
 }
+Vector3f convertTo3DPoint(int x, int y){
 
+      return Vector3f((x-SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), 0, (y-SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
+
+}
 void mouseDrawCB(int button, int state, int x, int y)
 {
     drawX = x;
@@ -233,7 +237,7 @@ void mouseDrawCB(int button, int state, int x, int y)
         if(state == GLUT_DOWN)
         {
             currShadowPixels.clear();
-            currShadowPixels.insert(std::make_pair(-1,-1));
+            currShadowPixels.insert(convertTo3DPoint(-1,-1));
             mouseDrawLeftDown = true;
         }
         else if(state == GLUT_UP)
@@ -242,13 +246,15 @@ void mouseDrawCB(int button, int state, int x, int y)
             drawY = y;
             for( int i = 0; i < brushWidth; i++){
               for( int j = 0; j < brushWidth; j++){
-                if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
-                    currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
-                    convertedShadowPixels.insert(Vector3f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j, 5));
+                if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j)){
+                    Vector3f converted =  convertTo3DPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
+                    currShadowPixels.insert(converted);
+                    pointsToDraw.insert(converted);
+                }
               }
             }
             glutPostRedisplay();
-            shadowPixels.push_back(currShadowPixels);
+            shadowPixels.push(currShadowPixels);
             mouseDrawLeftDown = false;
             
             glutSetWindow(mainWindow);
@@ -270,7 +276,7 @@ void mouseDrawCB(int button, int state, int x, int y)
         if(state == GLUT_DOWN)
         {
             currShadowPixels.clear();
-            currShadowPixels.insert(std::make_pair(-2,-2));
+            currShadowPixels.insert(convertTo3DPoint(-2,-2));
             mouseDrawRightDown = true;
         }
         else if(state == GLUT_UP){
@@ -278,14 +284,16 @@ void mouseDrawCB(int button, int state, int x, int y)
             drawY = y;
             for( int i = 0; i < brushWidth; i++){
               for( int j = 0; j < brushWidth; j++){
-                if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
-                    currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
-                    convertedShadowPixels.insert(Vector3f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j, 5));
+                if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j)){
+                    Vector3f converted = convertTo3DPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
+                    currShadowPixels.insert(converted);
+                    pointsToDraw.erase(converted);
+                }
               }
             }
             glutPostRedisplay();
             mouseDrawRightDown = false;
-            shadowPixels.push_back(currShadowPixels);
+            shadowPixels.push(currShadowPixels);
 
             //glColor3f(0.0f, 1.0f, 0.0f); 
             //glBegin(GL_POINTS);
@@ -308,9 +316,11 @@ void mouseDrawMotionCB(int x, int y)
         drawY = y;
         for( int i = 0; i < brushWidth; i++){
           for( int j = 0; j < brushWidth; j++){
-            if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
-                currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
-                convertedShadowPixels.insert(Vector3f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j, 5));
+            if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j)){
+                Vector3f converted = convertTo3DPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
+                currShadowPixels.insert(converted);
+                pointsToDraw.insert(converted);
+            }
           }
         }
         glutPostRedisplay();
@@ -321,8 +331,11 @@ void mouseDrawMotionCB(int x, int y)
         drawY = y;
         for( int i = 0; i < brushWidth; i++){
           for( int j = 0; j < brushWidth; j++){
-            if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
-                currShadowPixels.insert(std::make_pair(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j));
+            if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j)){
+                Vector3f converted = convertTo3DPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
+                currShadowPixels.insert(converted);
+                pointsToDraw.erase(converted);
+            }
           }
         }
         glutPostRedisplay();

@@ -3,6 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 project(voxelizer)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 file(GLOB_RECURSE HEADER_CODE ${voxelizer_SOURCE_DIR}/include/*.h)
 file(GLOB_RECURSE SRC_CODE ${voxelizer_SOURCE_DIR}/source/*.cpp)
 
