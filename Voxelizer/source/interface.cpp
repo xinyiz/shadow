@@ -1,5 +1,5 @@
 #include "../include/interface.h"
-
+using namespace std;
 int screenWidth;
 int screenHeight;
 bool mouseLeftDown;
@@ -17,10 +17,15 @@ int drawWindow;
 Queue<List> shadowPixels;
 List currShadowPixels;
 std::set<Vector3f> pointsToDraw;
+Vector3f addIndicator =  Vector3f(-1,-1,-1);
+Vector3f remIndicator =  Vector3f(-2,-2,-2);
 
 ///////////////////////////////////////////////////////////////////////////////
 // initialize global variables
 ///////////////////////////////////////////////////////////////////////////////
+int sampleFactor = 10; 
+int stride = brushWidth/sampleFactor; 
+
 bool initSharedMem()
 {
     screenWidth = SCREEN_WIDTH;
@@ -224,6 +229,12 @@ void mouseMotionCB(int x, int y)
     }
 }
 Vector3f convertTo3DPoint(int x, int y){
+      if(x == -1 && y == -1){
+        return addIndicator;
+      }
+      if(x == -2 && y == -2){
+        return remIndicator;
+      }
 
       return Vector3f((x-SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), 0, (y-SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
 
@@ -237,6 +248,7 @@ void mouseDrawCB(int button, int state, int x, int y)
         if(state == GLUT_DOWN)
         {
             currShadowPixels.clear();
+            cout << "Pushing first add point \n";
             currShadowPixels.insert(convertTo3DPoint(-1,-1));
             mouseDrawLeftDown = true;
         }
@@ -244,8 +256,8 @@ void mouseDrawCB(int button, int state, int x, int y)
         {
             drawX = x;
             drawY = y;
-            for( int i = 0; i < brushWidth; i++){
-              for( int j = 0; j < brushWidth; j++){
+            for( int i = 0; i < brushWidth; i+=stride){
+              for( int j = 0; j < brushWidth; j+=stride){
                 if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j)){
                     Vector3f converted =  convertTo3DPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
                     currShadowPixels.insert(converted);
@@ -254,6 +266,7 @@ void mouseDrawCB(int button, int state, int x, int y)
               }
             }
             glutPostRedisplay();
+            cout << "Pushed add updated of size :" << currShadowPixels.size() << "\n";
             shadowPixels.push(currShadowPixels);
             mouseDrawLeftDown = false;
             
@@ -275,6 +288,7 @@ void mouseDrawCB(int button, int state, int x, int y)
     {
         if(state == GLUT_DOWN)
         {
+            cout << "Pushing first rem point \n";
             currShadowPixels.clear();
             currShadowPixels.insert(convertTo3DPoint(-2,-2));
             mouseDrawRightDown = true;
@@ -282,8 +296,8 @@ void mouseDrawCB(int button, int state, int x, int y)
         else if(state == GLUT_UP){
             drawX = x;
             drawY = y;
-            for( int i = 0; i < brushWidth; i++){
-              for( int j = 0; j < brushWidth; j++){
+            for( int i = 0; i < brushWidth; i+=stride){
+              for( int j = 0; j < brushWidth; j+=stride){
                 if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j)){
                     Vector3f converted = convertTo3DPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
                     currShadowPixels.insert(converted);
@@ -292,6 +306,7 @@ void mouseDrawCB(int button, int state, int x, int y)
               }
             }
             glutPostRedisplay();
+            cout << "Pushed rem updated of size :" << currShadowPixels.size() << "\n";
             mouseDrawRightDown = false;
             shadowPixels.push(currShadowPixels);
 
@@ -314,8 +329,8 @@ void mouseDrawMotionCB(int x, int y)
     {
         drawX = x;
         drawY = y;
-        for( int i = 0; i < brushWidth; i++){
-          for( int j = 0; j < brushWidth; j++){
+        for( int i = 0; i < brushWidth; i+=stride){
+          for( int j = 0; j < brushWidth; j+=stride){
             if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j)){
                 Vector3f converted = convertTo3DPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
                 currShadowPixels.insert(converted);
@@ -329,8 +344,8 @@ void mouseDrawMotionCB(int x, int y)
     {
         drawX = x;
         drawY = y;
-        for( int i = 0; i < brushWidth; i++){
-          for( int j = 0; j < brushWidth; j++){
+        for( int i = 0; i < brushWidth; i+=stride){
+          for( int j = 0; j < brushWidth; j+=stride){
             if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j)){
                 Vector3f converted = convertTo3DPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
                 currShadowPixels.insert(converted);

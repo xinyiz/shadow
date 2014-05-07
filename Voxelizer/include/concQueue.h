@@ -19,6 +19,13 @@ class Queue
     return val;
   }
 
+
+  bool empty()
+  {
+    std::unique_lock<std::mutex> mlock(mutex_);
+    return queue_.empty();
+  }
+
   void pop(T& item)
   {
     std::unique_lock<std::mutex> mlock(mutex_);

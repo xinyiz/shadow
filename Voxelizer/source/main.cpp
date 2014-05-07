@@ -308,18 +308,18 @@ void triangulateVoxelGrid(const char * outfile)
         g_inputLampTriangles.push_back(CompFab::Triangle(v1,v2,v3));
     }
 
-    cout << "Testing...\n";
+    //cout << "Testing...\n";
     //TODO: testing - remove
-    // jitter the ray
-    srand(time(NULL));
-    float rand1 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
-    float rand2 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
-    float rand3 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
-    cout << "Random nums:" << rand1 << "," << rand2 << "," << rand3;
-    CompFab::Vec3 spoint(5.0+rand1,5.0+rand2,5.0+rand3);
-    //CompFab::Vec3 spoint(5.1,5.3,5.4);
-    //CompFab::Vec3 spoint(gridLLeft.m_x + ((double)3)*gridSpacing + rand1, gridLLeft.m_y + ((double)3)*gridSpacing+rand2, 6 + gridLLeft.m_z +((double)3)*gridSpacing+rand3);
-    voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, false);
+    //// jitter the ray
+    //srand(time(NULL));
+    //float rand1 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
+    //float rand2 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
+    //float rand3 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
+    //cout << "Random nums:" << rand1 << "," << rand2 << "," << rand3;
+    //CompFab::Vec3 spoint(5.0+rand1,5.0+rand2,5.0+rand3);
+    ////CompFab::Vec3 spoint(5.1,5.3,5.4);
+    ////CompFab::Vec3 spoint(gridLLeft.m_x + ((double)3)*gridSpacing + rand1, gridLLeft.m_y + ((double)3)*gridSpacing+rand2, 6 + gridLLeft.m_z +((double)3)*gridSpacing+rand3);
+    //voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, false);
 
     cout << "Saving...\n";
     g_carvedLampMesh.save_obj(outfile);
@@ -618,11 +618,52 @@ void room()
 
 }
 
+void updateLamp(std::set<Vector3f> points){
+   cout << "Points size: " << points.size() << "\n";
+   bool add = (points.find(addIndicator) != points.end());
+   cout << "Add update? " << add << "\n";
+   bool rem = (points.find(remIndicator) != points.end());
+   cout << "Remove update? " << rem << "\n";
+   if(add){
+     points.erase(addIndicator);
+   } else {
+     points.erase(remIndicator);
+   }
+
+
+   std::set<Vector3f>::iterator it;
+   Vector3f point;
+   for(it = points.begin(); it != points.end(); ++it){
+     point = *it;
+     // Jitter the shadow point
+     srand(time(NULL));
+     float rand1 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
+     float rand2 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
+     float rand3 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
+
+     CompFab::Vec3 spoint(point.x()+rand1,point.y()+rand2,point.z()+rand3);
+
+     voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, !add);
+   }
+}
+void processUpdates(){
+    //cout << "Processing updates...\n";
+    //cout << "Shadow pixels empty? " << shadowPixels.empty() << "\n";
+    if(!shadowPixels.empty()){
+        cout << "NOT EMPTY\n";    
+    }
+    while(!shadowPixels.empty()){
+        updateLamp(shadowPixels.pop());
+    }
+}
 /* 
   Callback that actually draws the mesh data 
 */
 void displayCB()
 {
+    // Send off points to be processed
+    processUpdates();
+
     // clear buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     setCamera(room_dim*0.5f, room_dim*0.7f, room_dim*2.0f, room_dim*0.5f, room_dim*0.5f,  room_dim*0.5f);
