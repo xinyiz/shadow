@@ -14,6 +14,8 @@ float cameraDistance;
 int brushWidth;
 int mainWindow;
 int drawWindow;
+int sampleFactor;
+int stride;
 Queue<List> shadowPixels;
 List currShadowPixels;
 std::set<Vector3f> pointsToDraw;
@@ -23,11 +25,10 @@ Vector3f remIndicator =  Vector3f(-2,-2,-2);
 ///////////////////////////////////////////////////////////////////////////////
 // initialize global variables
 ///////////////////////////////////////////////////////////////////////////////
-int sampleFactor = 10; 
-int stride = brushWidth/sampleFactor; 
 
 bool initSharedMem()
 {
+
     screenWidth = SCREEN_WIDTH;
     screenHeight = SCREEN_HEIGHT;
     mouseLeftDown = mouseRightDown = false;
@@ -36,6 +37,8 @@ bool initSharedMem()
     cameraAngleX = cameraAngleY = 0.0f;
     cameraDistance = room_dim*2.0f;
     brushWidth = BRUSH_WIDTH;
+    sampleFactor = 10;
+    stride = brushWidth/sampleFactor;
     return true;
 }
 

@@ -69,6 +69,8 @@ extern float cameraDistance;
 extern int brushWidth;
 extern int mainWindow;
 extern int drawWindow;
+extern int sampleFactor;
+extern int stride;
 
 bool initSharedMem();
 void initLights();

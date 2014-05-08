@@ -620,21 +620,21 @@ void room()
 
 void updateLamp(std::set<Vector3f> points){
    cout << "Points size: " << points.size() << "\n";
-   bool add = (points.find(addIndicator) != points.end());
-   cout << "Add update? " << add << "\n";
-   bool rem = (points.find(remIndicator) != points.end());
-   cout << "Remove update? " << rem << "\n";
-   if(add){
-     points.erase(addIndicator);
-   } else {
-     points.erase(remIndicator);
-   }
-
+   bool add = false;
 
    std::set<Vector3f>::iterator it;
    Vector3f point;
+   // first point in set is indicator
    for(it = points.begin(); it != points.end(); ++it){
      point = *it;
+     // since points.find() wasn't finding indicators
+     if (point == addIndicator) {
+        cout << "adding points" << "\n";
+        add = true;
+     } else if (point == remIndicator) {
+        cout << "removing points" << "\n";
+        add = false;
+     } else {
      // Jitter the shadow point
      srand(time(NULL));
      float rand1 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
@@ -642,9 +642,8 @@ void updateLamp(std::set<Vector3f> points){
      float rand3 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
 
      CompFab::Vec3 spoint(point.x()+rand1,point.y()+rand2,point.z()+rand3);
-
      voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, !add);
-   }
+   }}
 }
 void processUpdates(){
     //cout << "Processing updates...\n";
