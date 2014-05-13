@@ -473,10 +473,14 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
     std::vector<int> voxelIndices;
     CompFab::Vec3 vPos(gridLLeft.m_x + ((double)ii)*gridSpacing, gridLLeft.m_y + ((double)jj)*gridSpacing, gridLLeft.m_z +((double)kk)*gridSpacing);
     //CompFab::Vec3 dir = (shadePoint - vPos);
-    CompFab::Vec3 dir = CompFab::Vec3(-1,0,0);
+    CompFab::Vec3 dir(0,-1,0);
    
     dir.normalize();
     CompFab::RayStruct vRay = CompFab::RayStruct(vPos, dir);
+
+    CompFab::RayStruct oRay;
+    oRay.m_direction = CompFab::Vec3(-dir.m_x,-dir.m_y,-dir.m_z);
+    oRay.m_origin = CompFab::Vec3(gridLLeft.m_x + ((double)ii)*gridSpacing, -20 + gridLLeft.m_y + ((double)jj)*gridSpacing, gridLLeft.m_z +((double)kk)*gridSpacing);
 
     cout << "Shade point:" <<  shadePoint.m_x << "," << shadePoint.m_y << "," << shadePoint.m_z << "\n";
     cout << "Ray dir:" <<  dir.m_x << "," << dir.m_y << "," << dir.m_z << "\n";
@@ -487,15 +491,21 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
     unsigned int startTriangle;
     float prev_d, curr_d;       // rayTriangleIntersection dist to track entering/exit face
 
-
+    bool good = false;
     startTriangle = g_lampVoxelGrid->getFirstTriangle(ii, jj, kk);
     assert(g_lampVoxelGrid->isInside(ii,jj,kk));
     cout << "Start from first voxel..." << ii << "," << jj << "," << kk << " triangle num " << startTriangle << "\n";
     for(unsigned int tri = startTriangle; tri< startTriangle + 12; ++tri)
     {
-        prev_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
+        if( (tri%12) <= 3|| (tri%12) == 8 || (tri%12) == 9){
+            prev_d = rayTriangleIntersection(oRay, g_inputLampTriangles[tri]);
+        } else {
+            prev_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
+        }
         cout << "prev_d... " << prev_d << "\n";
         if(prev_d){
+            cout << "actually good\n";
+            good = true;
             if(add){
                 if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                    g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 1){
@@ -512,6 +522,10 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
             updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
             break;
         }
+    }
+    cout << "GOOD\n" << good;
+    if(good == false){
+      return;
     }
 
     // Case 1:  ADD 
@@ -549,12 +563,17 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
             startTriangle = g_lampVoxelGrid->getFirstTriangle(curr_i, curr_j, curr_k);
             for(unsigned int tri = startTriangle; tri< startTriangle + 12; tri++)
             {
+                if( (tri%12) <= 3|| (tri%12)==8 || (tri%12)==9){
+                    prev_d = rayTriangleIntersection(oRay, g_inputLampTriangles[tri]);
+                } else {
+                    prev_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
+                }
                 // Figure out which voxel to examine next
 
                 curr_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
                 //cout << "prev_d curr_d:" <<  prev_d << "," << curr_d << "\n";
                 //cout << "start triangle:" << tri << "\n";
-                if(prev_d < curr_d){    // Check triangle exit face triangle
+                if(prev_d != curr_d){    // Check triangle exit face triangle
                     if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                        g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 0){
                         cout << "Removing Triangles start at: " << startTriangle << "\n";
@@ -674,8 +693,8 @@ void updateLamp(std::set<Vector3f> points){
      int iii = voxelRes/2;
      int jjj = voxelRes/2;
      int kkk = voxelRes/2;
-     CompFab::Vec3 spoint(-20 + gridLLeft.m_x + ((double)iii)*gridSpacing, gridLLeft.m_y + ((double)jjj)*gridSpacing, gridLLeft.m_z +((double)kkk)*gridSpacing);
-     //CompFab::Vec3 spoint(point[0]+rand1,point[1]+rand2,point[2]+rand3);
+     //CompFab::Vec3 spoint(-20 + gridLLeft.m_x + ((double)iii)*gridSpacing, gridLLeft.m_y + ((double)jjj)*gridSpacing, gridLLeft.m_z +((double)kkk)*gridSpacing);
+     CompFab::Vec3 spoint(point[0]+rand1,point[1]+rand2,point[2]+rand3);
      voxelsIntersect(iii, jjj, kkk, spoint, !add);
      }
    }
