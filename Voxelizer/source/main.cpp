@@ -475,12 +475,15 @@ inline void removeActiveTriangles(unsigned int start){
   Correctly updates the lamp mesh information for 3d printing and rendering
 */
 void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add){
+    cout << "Intersecting ray with lamp for voxel updates...";
     std::vector<int> voxelIndices;
     CompFab::Vec3 vPos(gridLLeft.m_x + ((double)ii)*gridSpacing, gridLLeft.m_y + ((double)jj)*gridSpacing, gridLLeft.m_z +((double)kk)*gridSpacing);
     CompFab::Vec3 dir = (shadePoint - vPos);
     dir.normalize();
     CompFab::RayStruct vRay = CompFab::RayStruct(vPos, dir);
 
+    cout << "Shade point:" <<  shadePoint.m_x << "," << shadePoint.m_y << "," << shadePoint.m_z << "\n";
+    cout << "Ray dir:" <<  dir.m_x << "," << dir.m_y << "," << dir.m_z << "\n";
 
     unsigned int curr_i = ii;
     unsigned int curr_j = jj;
@@ -618,6 +621,38 @@ void room()
 
 }
 
+void updateTriangleVBOs(){
+    //Populate the triangle indices and upload data
+    GLfloat p1, p2, p3;
+    numAct = 0;
+    numInact = 0;
+    for(unsigned int tri =0; tri<g_carvedLampMesh.t.size(); ++tri)
+    {
+        p1 = (GLuint) g_carvedLampMesh.t[tri][0];
+        p2 = (GLuint) g_carvedLampMesh.t[tri][1];
+        p3 = (GLuint) g_carvedLampMesh.t[tri][2];
+      if(g_carvedLampMesh.activeTriangles.find(tri) != g_carvedLampMesh.activeTriangles.end())
+      {
+        lamp_triangles[numAct*3] = p1;
+        lamp_triangles[numAct*3 + 1] = p2;
+        lamp_triangles[numAct*3 + 2] = p3;
+        numAct+=1;
+      } else {
+        lamp_triangles_test[numInact*3] = p1;
+        lamp_triangles_test[numInact*3 + 1] = p2;
+        lamp_triangles_test[numInact*3 + 2] = p3;
+        numInact+=1;
+      }
+
+    }
+    assert((numAct + numInact) == triangles_size);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);                    // activate vbo id to use
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numAct*3*sizeof(GLushort), lamp_triangles, GL_STREAM_DRAW); // upload data to video card
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements_test);                    // activate vbo id to use
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numInact*3*sizeof(GLushort), lamp_triangles_test, GL_STREAM_DRAW); // upload data to video card
+
+}
 void updateLamp(std::set<Vector3f> points){
    cout << "Points size: " << points.size() << "\n";
    bool add = false;
@@ -641,9 +676,11 @@ void updateLamp(std::set<Vector3f> points){
      float rand2 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
      float rand3 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
 
-     CompFab::Vec3 spoint(point.x()+rand1,point.y()+rand2,point.z()+rand3);
+     CompFab::Vec3 spoint(1.0f+rand1,5.0f+rand2,2.0f+rand3);
      voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, !add);
-   }}
+     }
+   }
+   updateTriangleVBOs();
 }
 void processUpdates(){
     //cout << "Processing updates...\n";
