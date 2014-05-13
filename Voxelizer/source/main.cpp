@@ -280,12 +280,6 @@ void triangulateVoxelGrid(const char * outfile)
                 int triIndex = g_carvedLampMesh.append(box);
                 //Denote the start index of the 12 triangles for this voxel
                 //the indices are contiguous
-                if( ii == 21 && jj == 21 && kk == 20){
-                    cout << "TARGET 1: " << triIndex;
-                }
-                if( ii == 21 && jj == 20 && kk == 21){
-                    cout << "TARGET 2: " << triIndex;
-                }
                 g_lampVoxelGrid->setTrianglesIndex(ii,jj,kk,triIndex);
             }
         }
@@ -478,7 +472,9 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
     cout << "Intersecting ray with lamp for voxel updates...";
     std::vector<int> voxelIndices;
     CompFab::Vec3 vPos(gridLLeft.m_x + ((double)ii)*gridSpacing, gridLLeft.m_y + ((double)jj)*gridSpacing, gridLLeft.m_z +((double)kk)*gridSpacing);
-    CompFab::Vec3 dir = (shadePoint - vPos);
+    //CompFab::Vec3 dir = (shadePoint - vPos);
+    CompFab::Vec3 dir = CompFab::Vec3(-1,0,0);
+   
     dir.normalize();
     CompFab::RayStruct vRay = CompFab::RayStruct(vPos, dir);
 
@@ -675,9 +671,12 @@ void updateLamp(std::set<Vector3f> points){
      float rand1 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
      float rand2 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
      float rand3 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
-
-     CompFab::Vec3 spoint(1.0f+rand1,5.0f+rand2,2.0f+rand3);
-     voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, !add);
+     int iii = voxelRes/2;
+     int jjj = voxelRes/2;
+     int kkk = voxelRes/2;
+     CompFab::Vec3 spoint(-20 + gridLLeft.m_x + ((double)iii)*gridSpacing, gridLLeft.m_y + ((double)jjj)*gridSpacing, gridLLeft.m_z +((double)kkk)*gridSpacing);
+     //CompFab::Vec3 spoint(point[0]+rand1,point[1]+rand2,point[2]+rand3);
+     voxelsIntersect(iii, jjj, kkk, spoint, !add);
      }
    }
    updateTriangleVBOs();
@@ -727,17 +726,17 @@ void displayCB()
     glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
     glNormalPointer(GL_FLOAT, 0, 0);
 
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);
-    //glDrawElements(GL_TRIANGLES, numAct*3, GL_UNSIGNED_SHORT, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);
+    glDrawElements(GL_TRIANGLES, numAct*3, GL_UNSIGNED_SHORT, 0);
 
-    glColor4f(0.95f, 0.0f, 0.0f, 1.0f);
+    //glColor4f(0.95f, 0.0f, 0.0f, 1.0f);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements_test);
-    glDrawElements(GL_TRIANGLES, numInact*3, GL_UNSIGNED_SHORT, 0);
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements_test);
+    //glDrawElements(GL_TRIANGLES, numInact*3, GL_UNSIGNED_SHORT, 0);
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     // Draw the cubic room//////////////////////////////////////////////////////
-    room();
+    //room();
   
     // Draw points
     glColor3f(1.0f, 0.0f, 0.0f); 

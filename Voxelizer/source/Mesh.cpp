@@ -75,16 +75,16 @@ CompFab::Vec3 CUBE_VERT[8]={
     CompFab::Vec3 (0, 1, 1)
 };
 
-CompFab::Vec3i CUBE_TRIG[12]={CompFab::Vec3i(0,3,1),
-CompFab::Vec3i(1, 3, 2),
-CompFab::Vec3i(5, 4, 0),
-CompFab::Vec3i(5, 0, 1),
+CompFab::Vec3i CUBE_TRIG[12]={CompFab::Vec3i(1,3,0),
+CompFab::Vec3i(2, 3, 1),
+CompFab::Vec3i(0, 4, 5),
+CompFab::Vec3i(1, 0, 5),
 CompFab::Vec3i(6, 5, 1),
 CompFab:: Vec3i(1, 2, 6),
 CompFab:: Vec3i(3, 6, 2),
 CompFab:: Vec3i(3, 7, 6),
-CompFab:: Vec3i(4, 3, 0),
-CompFab:: Vec3i(4, 7, 3),
+CompFab:: Vec3i(0, 3, 4),
+CompFab:: Vec3i(3, 7, 4),
 CompFab:: Vec3i(7, 4, 5),
 CompFab:: Vec3i(7, 5, 6)};
 Mesh UNIT_CUBE(CUBE_VERT,CUBE_TRIG);
