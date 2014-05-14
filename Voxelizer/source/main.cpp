@@ -521,12 +521,14 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
                 if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                    g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 1){
                     addActiveTriangles(startTriangle);          //Update g_carvedLampMesh
+                    g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) = 0;
                     cout << "Adding Triangles start at: " << startTriangle << "\n";
                 }
             } else {
                 if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                    g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 0){
                     removeActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
+                    g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) = 1;
                     cout << "Removing Triangles start at: " << startTriangle << "\n";
                 }
             }
@@ -552,6 +554,7 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
                     if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                        g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 1){
                         addActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
+                        g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) = 0;
                         cout << "Adding Triangles start at: " << startTriangle << "\n";
                     }
                     updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
@@ -578,8 +581,9 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
                 if(prev_d < curr_d){    // Check triangle exit face triangle
                     if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                        g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 0){
-                        cout << "Removing Triangles start at: " << startTriangle << "\n";
                         removeActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
+                        g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) = 1;
+                        cout << "Removing Triangles start at: " << startTriangle << "\n";
                     }
                     updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
                     break;

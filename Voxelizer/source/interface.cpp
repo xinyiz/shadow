@@ -37,7 +37,7 @@ bool initSharedMem()
     cameraAngleX = cameraAngleY = 0.0f;
     cameraDistance = room_dim*2.0f;
     brushWidth = BRUSH_WIDTH;
-    sampleFactor = 10;
+    sampleFactor = 2;
     stride = brushWidth/sampleFactor;
     return true;
 }
@@ -276,15 +276,6 @@ void mouseDrawCB(int button, int state, int x, int y)
             glutSetWindow(mainWindow);
             glutPostRedisplay();
             glutSetWindow(drawWindow);
-            //glColor3f(1.0f, 0.0f, 0.0f); 
-            //glBegin(GL_POINTS);
-            //List::iterator it;
-            //Point pixel;
-            //for(it = currShadowPixels.begin(); it != currShadowPixels.end(); ++it){
-            //  pixel = *it;
-            //  glVertex2f(pixel.first,pixel.second);
-            //}
-            //glEnd();
         }
     }
     else if(button == GLUT_RIGHT_BUTTON)
@@ -313,6 +304,9 @@ void mouseDrawCB(int button, int state, int x, int y)
             mouseDrawRightDown = false;
             shadowPixels.push(currShadowPixels);
 
+            glutSetWindow(mainWindow);
+            glutPostRedisplay();
+            glutSetWindow(drawWindow);
             //glColor3f(0.0f, 1.0f, 0.0f); 
             //glBegin(GL_POINTS);
             //List::iterator it;
