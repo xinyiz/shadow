@@ -145,6 +145,7 @@ float rayTriangleIntersection(CompFab::Ray &ray, CompFab::Triangle &triangle)
       return 0;
     }
     double t = f*(e2*r);
+    cout << "T:" << t << "\n";
     if( t <= 0.0 ){
       return 0;
     }
@@ -255,7 +256,6 @@ void saveVoxelsToObj(const char * outfile)
 
     mout.save_obj(outfile);
 }
-
 /*
   Convert the voxel representation of the lamp into a mesh.
   @sets lamp_vertices, lamp_normals, lamp_triangles
@@ -280,11 +280,20 @@ void triangulateVoxelGrid(const char * outfile)
                 int triIndex = g_carvedLampMesh.append(box);
                 //Denote the start index of the 12 triangles for this voxel
                 //the indices are contiguous
-                if( ii == 21 && jj == 21 && kk == 20){
+                if( ii == 10 && jj == 10 && kk == 10){
+                  cout << "TRIANGLES FOR BOX 10,10,10: \n";
+                  CompFab::Vec3 v1, v2, v3;
+                  for(int i = 0; i < 12; i++){
+                    v1 = box.v[box.t[i][0]];
+                    v2 = box.v[box.t[i][1]];
+                    v3 = box.v[box.t[i][2]];
+                    cout << "v1: " << v1.m_x << "," << v1.m_y << "," << v1.m_z << "\n";
+                    cout << "v2: " << v2.m_x << "," << v2.m_y << "," << v2.m_z << "\n";
+                    cout << "v3: " << v3.m_x << "," << v3.m_y << "," << v3.m_z << "\n";
+                    cout << "\n";
+
+                  }
                     cout << "TARGET 1: " << triIndex;
-                }
-                if( ii == 21 && jj == 20 && kk == 21){
-                    cout << "TARGET 2: " << triIndex;
                 }
                 g_lampVoxelGrid->setTrianglesIndex(ii,jj,kk,triIndex);
             }
@@ -468,7 +477,12 @@ inline void removeActiveTriangles(unsigned int start){
       g_carvedLampMesh.activeTriangles.erase(i);
     }
 }
-
+void printTriangle(CompFab::Triangle T){
+  cout << "Triangle---\n";
+  cout << "v1: " << T.m_v1.m_x << "," << T.m_v1.m_y << "," << T.m_v1.m_z << "\n";
+  cout << "v2: " << T.m_v2.m_x << "," << T.m_v2.m_y << "," << T.m_v2.m_z << "\n";
+  cout << "v3: " << T.m_v3.m_x << "," << T.m_v3.m_y << "," << T.m_v3.m_z << "\n";
+}
 /*
   @param ii, jj, kk - voxel containing the light source  
   @param shadePoint - the end point of the light ray
@@ -477,10 +491,12 @@ inline void removeActiveTriangles(unsigned int start){
 void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add){
     cout << "Intersecting ray with lamp for voxel updates...";
     std::vector<int> voxelIndices;
-    CompFab::Vec3 vPos(gridLLeft.m_x + ((double)ii)*gridSpacing, gridLLeft.m_y + ((double)jj)*gridSpacing, gridLLeft.m_z +((double)kk)*gridSpacing);
+    CompFab::Vec3 vPos(gridLLeft.m_x + ((double)ii)*gridSpacing + gridSpacing*0.5f, gridLLeft.m_y + ((double)jj)*gridSpacing + gridSpacing*0.5f, gridLLeft.m_z +((double)kk)*gridSpacing+ gridSpacing*0.5f);
     CompFab::Vec3 dir = (shadePoint - vPos);
+    //CompFab::Vec3 dir(0,-1,0);
     dir.normalize();
     CompFab::RayStruct vRay = CompFab::RayStruct(vPos, dir);
+    cout << "Origin:" <<  vPos.m_x << "," << vPos.m_y << "," << vPos.m_z << "\n";
 
     cout << "Shade point:" <<  shadePoint.m_x << "," << shadePoint.m_y << "," << shadePoint.m_z << "\n";
     cout << "Ray dir:" <<  dir.m_x << "," << dir.m_y << "," << dir.m_z << "\n";
@@ -497,6 +513,7 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
     cout << "Start from first voxel..." << ii << "," << jj << "," << kk << " triangle num " << startTriangle << "\n";
     for(unsigned int tri = startTriangle; tri< startTriangle + 12; ++tri)
     {
+        printTriangle(g_inputLampTriangles[tri]);
         prev_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
         cout << "prev_d... " << prev_d << "\n";
         if(prev_d){
@@ -676,7 +693,7 @@ void updateLamp(std::set<Vector3f> points){
      float rand2 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
      float rand3 = static_cast <float> (rand()/ static_cast<float> (RAND_MAX))*0.01f;
 
-     CompFab::Vec3 spoint(1.0f+rand1,5.0f+rand2,2.0f+rand3);
+     CompFab::Vec3 spoint(point[0]+rand1,point[1]+rand2,point[2]+rand3);
      voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, !add);
      }
    }
