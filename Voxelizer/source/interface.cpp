@@ -314,7 +314,15 @@ void mouseDrawCB(int button, int state, int x, int y)
                     if(i%stride == 0){
                         currShadowPixels.insert(converted);
                     }
-                    pointsToDraw.erase(converted);
+                    std::set<Vector3f>::iterator it;
+                    for (it = pointsToDraw.begin(); it != pointsToDraw.end();){
+                      if (*it == converted){
+                        pointsToDraw.erase(it++);
+                        break;
+                      } else {
+                        ++it;
+                      }
+                    }
                 }
               }
             }
@@ -369,7 +377,15 @@ void mouseDrawMotionCB(int x, int y)
                 if(i%stride == 0){
                     currShadowPixels.insert(converted);
                 }
-                pointsToDraw.erase(converted);
+                std::set<Vector3f>::iterator it;
+                for (it = pointsToDraw.begin(); it != pointsToDraw.end();){
+                  if (*it == converted){
+                    pointsToDraw.erase(it++);
+                    break;
+                  } else {
+                    ++it;
+                  }
+                }
             }
           }
         }
