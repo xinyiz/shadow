@@ -27,7 +27,8 @@ using std::ends;
 ///////////////
 // CONSTANTS //
 ///////////////
-
+int c_res = 10;
+int c_stride = 360/c_res;
 int nextVoxelLookup[36] = 
 { 
      0, 0,-1, 
@@ -713,6 +714,19 @@ void processUpdates(){
         updateLamp(shadowPixels.pop());
     }
 }
+void drawFilledCircle(float cx, float cy, float r){
+    if (!isValidPoint(drawX, drawY)){
+        return;
+    }
+    //fill a circle using a triangle fan
+    glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(cx,cy);
+        for (int i = 0; i <=c_res; i++)
+        {
+            glVertex2f(cx + 2.0*r*cos(i*c_stride*M_PI/180), cy + 2.0*r*sin(i*c_stride*M_PI/180));
+        }
+    glEnd();
+}
 /* 
   Callback that actually draws the mesh data 
 */
@@ -748,20 +762,20 @@ void displayCB()
     glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
     glNormalPointer(GL_FLOAT, 0, 0);
 
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);
-    //glDrawElements(GL_TRIANGLES, numAct*3, GL_UNSIGNED_SHORT, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements);
+    glDrawElements(GL_TRIANGLES, numAct*3, GL_UNSIGNED_SHORT, 0);
 
-    glColor4f(0.95f, 0.0f, 0.0f, 1.0f);
+    //glColor4f(0.95f, 0.0f, 0.0f, 1.0f);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements_test);
-    glDrawElements(GL_TRIANGLES, numInact*3, GL_UNSIGNED_SHORT, 0);
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements_test);
+    //glDrawElements(GL_TRIANGLES, numInact*3, GL_UNSIGNED_SHORT, 0);
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     // Draw the cubic room//////////////////////////////////////////////////////
     room();
   
     // Draw points
-    glColor3f(1.0f, 0.0f, 0.0f); 
+    glColor3f(1.0f, 1.0f, 1.0f); 
     glPointSize(5.0f);
     glBegin(GL_POINTS);
     std::set<Vector3f>::iterator it;
@@ -823,20 +837,21 @@ void displayDrawCB()
 
     // User drawn shadow
     if(mouseDrawLeftDown){
-      glColor3f(0.6f, 0.98f, 0.95f); 
+      glColor3f(1.0f, 1.0f, 1.0f); 
     } else if(mouseDrawRightDown){
       glColor3f(0.0f, 0.0f, 0.0f); 
     } else {
       return;
     }
     
-    glBegin(GL_POINTS);
-    for( int i = 0; i < brushWidth; i++){
-      for( int j = 0; j < brushWidth; j++){
-        if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
-            glVertex2f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
-      }
-    }
+    drawFilledCircle(drawX, drawY, brushWidth/2);
+    //glBegin(GL_POINTS);
+    //for( int i = 0; i < brushWidth; i++){
+    //  for( int j = 0; j < brushWidth; j++){
+    //    if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j))
+    //        glVertex2f(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
+    //  }
+    //}
 
     glEnd();
     

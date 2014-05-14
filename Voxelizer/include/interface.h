@@ -17,7 +17,7 @@ extern Vector3f addIndicator;
 extern Vector3f remIndicator;
 const int SCREEN_WIDTH = 500;
 const int SCREEN_HEIGHT = 500;
-const int BRUSH_WIDTH = 10;
+const int BRUSH_WIDTH = 6;
 
 /////////////
 // GLOBALS //
