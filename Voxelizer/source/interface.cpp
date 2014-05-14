@@ -238,9 +238,24 @@ Vector3f convertTo3DPoint(int x, int y){
       if(x == -2 && y == -2){
         return remIndicator;
       }
-
-      return Vector3f((x-SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), 0, (y-SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
-
+      
+      // oriented as if the four boxes folded up to become the walls
+      if(x >= SCREEN_WIDTH/3 && x <= 2*SCREEN_WIDTH/3 && y >= SCREEN_HEIGHT/3 && y <= 2*SCREEN_HEIGHT/3){
+        // middle box = floor of room
+        return Vector3f((x-SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), 0, (y-SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
+      } else if (x >= SCREEN_WIDTH/3 && x <= 2*SCREEN_WIDTH/3 && y >=0 && y <= SCREEN_HEIGHT/3) {
+        // top box = back wall
+       return Vector3f((x-SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), (SCREEN_HEIGHT/3 - y)*(room_dim/(SCREEN_HEIGHT/3)), 0);
+      } else if (x >= SCREEN_WIDTH/3 && x <= 2*SCREEN_WIDTH/3 && y >= 2*SCREEN_HEIGHT/3 && y <= SCREEN_HEIGHT){
+        // bottom box = front wall
+        return Vector3f((x-SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), (y - SCREEN_HEIGHT)*(room_dim/(SCREEN_HEIGHT/3)) + room_dim, room_dim);
+      } else if(x >= 0 && x <= SCREEN_WIDTH/3 && y >= SCREEN_HEIGHT/3 && y <= 2*SCREEN_HEIGHT/3) {
+        // left box = left wall
+        return Vector3f(0,(SCREEN_WIDTH/3 - x)*(room_dim/(SCREEN_WIDTH/3)), (y - SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
+      } else {
+        // right box = right wall
+        return Vector3f(room_dim,(x - 2*SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), (y - SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
+      }
 }
 void mouseDrawCB(int button, int state, int x, int y)
 {
