@@ -54,7 +54,7 @@ void initLights()
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightKd);
     glLightfv(GL_LIGHT0, GL_SPECULAR, lightKs);
     // position the light
-    float lightPos[4] = {light_xpos, light_ypos, light_zpos, 1}; // positional light
+    float lightPos[4] = {room_dim-0.2f, room_dim-0.2f, room_dim-0.2f, 1}; // positional light
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
     glEnable(GL_LIGHT0);                        // MUST enable each light source after configuration
 }

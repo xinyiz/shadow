@@ -731,6 +731,9 @@ void displayCB()
 
     initLights();
     glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
+
+    glPushMatrix();
+    glTranslatef(light_xpos, light_ypos, light_zpos);
     // Draw the lamp////////////////////////////////////////////////////////////
     // Set vertex data
     glColor3f(0.6f, 0.98f, 0.95f); 
@@ -752,6 +755,7 @@ void displayCB()
     //glDrawElements(GL_TRIANGLES, numInact*3, GL_UNSIGNED_SHORT, 0);
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glPopMatrix();
     // Draw the cubic room//////////////////////////////////////////////////////
     room();
   
