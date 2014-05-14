@@ -282,21 +282,6 @@ void triangulateVoxelGrid(const char * outfile)
                 int triIndex = g_carvedLampMesh.append(box);
                 //Denote the start index of the 12 triangles for this voxel
                 //the indices are contiguous
-                if( ii == 10 && jj == 10 && kk == 10){
-                  cout << "TRIANGLES FOR BOX 10,10,10: \n";
-                  CompFab::Vec3 v1, v2, v3;
-                  for(int i = 0; i < 12; i++){
-                    v1 = box.v[box.t[i][0]];
-                    v2 = box.v[box.t[i][1]];
-                    v3 = box.v[box.t[i][2]];
-                    cout << "v1: " << v1.m_x << "," << v1.m_y << "," << v1.m_z << "\n";
-                    cout << "v2: " << v2.m_x << "," << v2.m_y << "," << v2.m_z << "\n";
-                    cout << "v3: " << v3.m_x << "," << v3.m_y << "," << v3.m_z << "\n";
-                    cout << "\n";
-
-                  }
-                    cout << "TARGET 1: " << triIndex;
-                }
                 g_lampVoxelGrid->setTrianglesIndex(ii,jj,kk,triIndex);
             }
         }
@@ -489,7 +474,7 @@ void printTriangle(CompFab::Triangle T){
   Correctly updates the lamp mesh information for 3d printing and rendering
 */
 void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add){
-    cout << "Intersecting ray with lamp for voxel updates...";
+    //cout << "Intersecting ray with lamp for voxel updates...";
     std::vector<int> voxelIndices;
     CompFab::Vec3 vPos(gridLLeft.m_x + ((double)ii)*gridSpacing + gridSpacing*0.5f, gridLLeft.m_y + ((double)jj)*gridSpacing + gridSpacing*0.5f, gridLLeft.m_z +((double)kk)*gridSpacing+ gridSpacing*0.5f);
     CompFab::Vec3 dir = (shadePoint - vPos);
@@ -510,10 +495,10 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
 
     startTriangle = g_lampVoxelGrid->getFirstTriangle(ii, jj, kk);
     assert(g_lampVoxelGrid->isInside(ii,jj,kk));
-    cout << "Start from first voxel..." << ii << "," << jj << "," << kk << " triangle num " << startTriangle << "\n";
+    //cout << "Start from first voxel..." << ii << "," << jj << "," << kk << " triangle num " << startTriangle << "\n";
     for(unsigned int tri = startTriangle; tri< startTriangle + 12; ++tri)
     {
-        printTriangle(g_inputLampTriangles[tri]);
+        //printTriangle(g_inputLampTriangles[tri]);
         prev_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
         //cout << "prev_d... " << prev_d << "\n";
         if(prev_d){
@@ -522,14 +507,14 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
                    g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 1){
                     addActiveTriangles(startTriangle);          //Update g_carvedLampMesh
                     g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) = 0;
-                    cout << "Adding Triangles start at: " << startTriangle << "\n";
+                    //cout << "Adding Triangles start at: " << startTriangle << "\n";
                 }
             } else {
                 if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
                    g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 0){
                     removeActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
                     g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) = 1;
-                    cout << "Removing Triangles start at: " << startTriangle << "\n";
+                    //cout << "Removing Triangles start at: " << startTriangle << "\n";
                 }
             }
             updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
@@ -540,7 +525,7 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
     // Case 1:  ADD 
     // Iterate until ray exits lamp bounds 
     if(add){
-        cout << "Adding back voxels in ray path...\n";
+        //cout << "Adding back voxels in ray path...\n";
         while(true){
             if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 0)
                 return;
@@ -555,7 +540,7 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
                        g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 1){
                         addActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
                         g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) = 0;
-                        cout << "Adding Triangles start at: " << startTriangle << "\n";
+                        //cout << "Adding Triangles start at: " << startTriangle << "\n";
                     }
                     updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
                     break;
@@ -564,9 +549,9 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
             prev_d = curr_d;
         }
     } else{ // Case 2:  REMOVE 
-        cout << "Removing voxels in ray path...\n";
+        //cout << "Removing voxels in ray path...\n";
         while(true){
-            cout << "Curr voxel: " << curr_i << "," << curr_j << "," << curr_k << "\n";
+            //cout << "Curr voxel: " << curr_i << "," << curr_j << "," << curr_k << "\n";
             if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 0)
                 return;
 
@@ -583,7 +568,7 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
                        g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) == 0){
                         removeActiveTriangles(startTriangle);       //Update g_carvedLampMesh 
                         g_lampVoxelGrid->isCarved(curr_i, curr_j, curr_k) = 1;
-                        cout << "Removing Triangles start at: " << startTriangle << "\n";
+                        //cout << "Removing Triangles start at: " << startTriangle << "\n";
                     }
                     updateNextVoxel(curr_i,curr_j,curr_k,(tri % 12));
                     break;
@@ -675,7 +660,7 @@ void updateTriangleVBOs(){
 
 }
 void updateLamp(std::set<Vector3f> points){
-   cout << "Points size: " << points.size() << "\n";
+   //cout << "Points size: " << points.size() << "\n";
    bool add = false;
 
    std::set<Vector3f>::iterator it;
@@ -685,10 +670,10 @@ void updateLamp(std::set<Vector3f> points){
      point = *it;
      // since points.find() wasn't finding indicators
      if (point == addIndicator) {
-        cout << "adding points" << "\n";
+        //cout << "adding points" << "\n";
         add = true;
      } else if (point == remIndicator) {
-        cout << "removing points" << "\n";
+        //cout << "removing points" << "\n";
         add = false;
      } else {
      // Jitter the shadow point
@@ -706,9 +691,6 @@ void updateLamp(std::set<Vector3f> points){
 void processUpdates(){
     //cout << "Processing updates...\n";
     //cout << "Shadow pixels empty? " << shadowPixels.empty() << "\n";
-    if(!shadowPixels.empty()){
-        cout << "NOT EMPTY\n";    
-    }
     while(!shadowPixels.empty()){
         updateLamp(shadowPixels.pop());
     }

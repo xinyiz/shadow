@@ -268,7 +268,7 @@ void mouseDrawCB(int button, int state, int x, int y)
         if(state == GLUT_DOWN)
         {
             currShadowPixels.clear();
-            cout << "Pushing first add point \n";
+            //cout << "Pushing first add point \n";
             currShadowPixels.insert(convertTo3DPoint(-1,-1));
             mouseDrawLeftDown = true;
         }
@@ -288,7 +288,7 @@ void mouseDrawCB(int button, int state, int x, int y)
               }
             }
             glutPostRedisplay();
-            cout << "Pushed add updated of size :" << currShadowPixels.size() << "\n";
+            //cout << "Pushed add updated of size :" << currShadowPixels.size() << "\n";
             shadowPixels.push(currShadowPixels);
             mouseDrawLeftDown = false;
             
@@ -301,7 +301,7 @@ void mouseDrawCB(int button, int state, int x, int y)
     {
         if(state == GLUT_DOWN)
         {
-            cout << "Pushing first rem point \n";
+            //cout << "Pushing first rem point \n";
             currShadowPixels.clear();
             currShadowPixels.insert(convertTo3DPoint(-2,-2));
             mouseDrawRightDown = true;
@@ -329,22 +329,13 @@ void mouseDrawCB(int button, int state, int x, int y)
               }
             }
             glutPostRedisplay();
-            cout << "Pushed rem updated of size :" << currShadowPixels.size() << "\n";
+            //cout << "Pushed rem updated of size :" << currShadowPixels.size() << "\n";
             mouseDrawRightDown = false;
             shadowPixels.push(currShadowPixels);
 
             glutSetWindow(mainWindow);
             glutPostRedisplay();
             glutSetWindow(drawWindow);
-            //glColor3f(0.0f, 1.0f, 0.0f); 
-            //glBegin(GL_POINTS);
-            //List::iterator it;
-            //Point pixel;
-            //for(it = currShadowPixels.begin(); it != currShadowPixels.end(); ++it){
-            //  pixel = *it;
-            //  glVertex2f(pixel.first,pixel.second);
-            //}
-            //glEnd();
         }
     }
 }
