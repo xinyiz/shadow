@@ -90,6 +90,7 @@ Vector3f convertTo3DPoint(int x, int y);
 void mouseDrawCB(int button, int stat, int x, int y);
 void mouseMotionCB(int x, int y);
 void mouseDrawMotionCB(int x, int y);
+void keyboardCB(unsigned char key, int x, int y);
 void deleteVBO(const GLuint vboId);
 void clearSharedMem();
 void exitCB();

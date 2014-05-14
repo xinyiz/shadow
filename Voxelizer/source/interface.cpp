@@ -122,6 +122,7 @@ int initGLUT(int argc, char **argv)
     glutReshapeFunc(reshapeCB);
     glutMouseFunc(mouseCB);
     glutMotionFunc(mouseMotionCB);
+    glutKeyboardFunc(keyboardCB);
 
     return handle;
 }
@@ -138,6 +139,7 @@ int initGLUTDraw(int argc, char **argv)
     glutReshapeFunc(reshapeCB);
     glutMouseFunc(mouseDrawCB);
     glutMotionFunc(mouseDrawMotionCB);
+    glutKeyboardFunc(keyboardCB);
     
     return drawHandle;
 }

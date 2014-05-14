@@ -28,9 +28,10 @@ using std::ends;
 // CONSTANTS //
 ///////////////
 
+const char * out_filename;
 int c_res = 10;
 int c_stride = 360/c_res;
-const char * out_filename;
+
 int nextVoxelLookup[36] = 
 { 
      0, 0,-1, 
@@ -256,8 +257,6 @@ void saveVoxelsToObj(const char * outfile)
         }
 
     }
-
-    mout.save_obj(outfile);
 }
 /*
   Convert the voxel representation of the lamp into a mesh.
@@ -333,8 +332,6 @@ void triangulateVoxelGrid(const char * outfile)
     ////CompFab::Vec3 spoint(gridLLeft.m_x + ((double)3)*gridSpacing + rand1, gridLLeft.m_y + ((double)3)*gridSpacing+rand2, 6 + gridLLeft.m_z +((double)3)*gridSpacing+rand3);
     //voxelsIntersect(voxelRes/2, voxelRes/2, voxelRes/2, spoint, false);
 
-    cout << "Saving...\n";
-    g_carvedLampMesh.save_obj(outfile);
 
     GLfloat p1, p2, p3;
     vertices_size = g_carvedLampMesh.v.size();
@@ -736,9 +733,6 @@ void displayCB()
 {
     // Send off points to be processed
     processUpdates();
-    //TODO: Save on some user input
-    //cout << "Saving...\n";
-    //g_carvedLampMesh.save_obj(out_filename);
 
     // clear buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -862,6 +856,16 @@ void displayDrawCB()
     
     glutSwapBuffers();
 }
+
+void keyboardCB(unsigned char key, int x, int y){
+    if( key == 32){
+        std::ofstream ofs;
+        ofs.open(out_filename, std::ofstream::out | std::ofstream::trunc);
+        ofs.close();  
+        cout << "Saving...\n";
+        g_carvedLampMesh.save(out_filename);
+    } 
+}
 //////////
 // MAIN //
 //////////
@@ -892,7 +896,8 @@ int main(int argc, char **argv)
 
     int bufferSize;
     voxelRes = atoi(argv[3]);
-    out_filename = argv[1];
+    out_filename = argv[2];
+
     // Initialize the lamp mesh
     voxelizer(argv[1], argv[2], voxelRes);
     // Initialize the other scene data
