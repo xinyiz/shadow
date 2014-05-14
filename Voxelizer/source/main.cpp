@@ -27,8 +27,10 @@ using std::ends;
 ///////////////
 // CONSTANTS //
 ///////////////
+
 int c_res = 10;
 int c_stride = 360/c_res;
+const char * out_filename;
 int nextVoxelLookup[36] = 
 { 
      0, 0,-1, 
@@ -734,6 +736,9 @@ void displayCB()
 {
     // Send off points to be processed
     processUpdates();
+    //TODO: Save on some user input
+    //cout << "Saving...\n";
+    //g_carvedLampMesh.save_obj(out_filename);
 
     // clear buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -887,7 +892,7 @@ int main(int argc, char **argv)
 
     int bufferSize;
     voxelRes = atoi(argv[3]);
-
+    out_filename = argv[1];
     // Initialize the lamp mesh
     voxelizer(argv[1], argv[2], voxelRes);
     // Initialize the other scene data

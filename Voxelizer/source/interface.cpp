@@ -274,11 +274,13 @@ void mouseDrawCB(int button, int state, int x, int y)
         {
             drawX = x;
             drawY = y;
-            for( int i = 0; i < brushWidth; i+=stride){
-              for( int j = 0; j < brushWidth; j+=stride){
+            for( int i = 0; i < brushWidth; i++){
+              for( int j = 0; j < brushWidth; j++){
                 if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j)){
-                    Vector3f converted =  convertTo3DPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
-                    currShadowPixels.insert(converted);
+                    Vector3f converted = convertTo3DPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
+                    if(i%stride == 0){
+                        currShadowPixels.insert(converted);
+                    }
                     pointsToDraw.insert(converted);
                 }
               }
@@ -305,11 +307,13 @@ void mouseDrawCB(int button, int state, int x, int y)
         else if(state == GLUT_UP){
             drawX = x;
             drawY = y;
-            for( int i = 0; i < brushWidth; i+=stride){
-              for( int j = 0; j < brushWidth; j+=stride){
+            for( int i = 0; i < brushWidth; i++){
+              for( int j = 0; j < brushWidth; j++){
                 if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j)){
                     Vector3f converted = convertTo3DPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
-                    currShadowPixels.insert(converted);
+                    if(i%stride == 0){
+                        currShadowPixels.insert(converted);
+                    }
                     pointsToDraw.erase(converted);
                 }
               }
@@ -341,11 +345,13 @@ void mouseDrawMotionCB(int x, int y)
     {
         drawX = x;
         drawY = y;
-        for( int i = 0; i < brushWidth; i+=stride){
-          for( int j = 0; j < brushWidth; j+=stride){
+        for( int i = 0; i < brushWidth; i++){
+          for( int j = 0; j < brushWidth; j++){
             if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j)){
                 Vector3f converted = convertTo3DPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
-                currShadowPixels.insert(converted);
+                if(i%stride == 0){
+                    currShadowPixels.insert(converted);
+                }
                 pointsToDraw.insert(converted);
             }
           }
@@ -356,11 +362,13 @@ void mouseDrawMotionCB(int x, int y)
     {
         drawX = x;
         drawY = y;
-        for( int i = 0; i < brushWidth; i+=stride){
-          for( int j = 0; j < brushWidth; j+=stride){
+        for( int i = 0; i < brushWidth; i++){
+          for( int j = 0; j < brushWidth; j++){
             if (isValidPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j)){
                 Vector3f converted = convertTo3DPoint(drawX-(brushWidth/2)+i, drawY-(brushWidth/2)+j);
-                currShadowPixels.insert(converted);
+                if(i%stride == 0){
+                    currShadowPixels.insert(converted);
+                }
                 pointsToDraw.erase(converted);
             }
           }
