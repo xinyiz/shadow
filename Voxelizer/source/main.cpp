@@ -145,7 +145,7 @@ float rayTriangleIntersection(CompFab::Ray &ray, CompFab::Triangle &triangle)
       return 0;
     }
     double t = f*(e2*r);
-    cout << "T:" << t << "\n";
+    //cout << "T:" << t << "\n";
     if( t <= 0.0 ){
       return 0;
     }
@@ -496,10 +496,10 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
     //CompFab::Vec3 dir(0,-1,0);
     dir.normalize();
     CompFab::RayStruct vRay = CompFab::RayStruct(vPos, dir);
-    cout << "Origin:" <<  vPos.m_x << "," << vPos.m_y << "," << vPos.m_z << "\n";
+    //cout << "Origin:" <<  vPos.m_x << "," << vPos.m_y << "," << vPos.m_z << "\n";
 
-    cout << "Shade point:" <<  shadePoint.m_x << "," << shadePoint.m_y << "," << shadePoint.m_z << "\n";
-    cout << "Ray dir:" <<  dir.m_x << "," << dir.m_y << "," << dir.m_z << "\n";
+    //cout << "Shade point:" <<  shadePoint.m_x << "," << shadePoint.m_y << "," << shadePoint.m_z << "\n";
+    //cout << "Ray dir:" <<  dir.m_x << "," << dir.m_y << "," << dir.m_z << "\n";
 
     unsigned int curr_i = ii;
     unsigned int curr_j = jj;
@@ -515,7 +515,7 @@ void voxelsIntersect(int ii, int jj, int kk, CompFab::Vec3 &shadePoint, bool add
     {
         printTriangle(g_inputLampTriangles[tri]);
         prev_d = rayTriangleIntersection(vRay, g_inputLampTriangles[tri]);
-        cout << "prev_d... " << prev_d << "\n";
+        //cout << "prev_d... " << prev_d << "\n";
         if(prev_d){
             if(add){
                 if(g_lampVoxelGrid->isInside(curr_i, curr_j, curr_k) == 1 && 
