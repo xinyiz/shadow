@@ -54,7 +54,7 @@ void initLights()
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightKd);
     glLightfv(GL_LIGHT0, GL_SPECULAR, lightKs);
     // position the light
-    float lightPos[4] = {room_dim-0.2f, room_dim-0.2f, room_dim-0.2f, 1}; // positional light
+    float lightPos[4] = {0.5f*room_dim, room_dim, 0.5f*room_dim, 1}; // positional light
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
     glEnable(GL_LIGHT0);                        // MUST enable each light source after configuration
 }
@@ -165,7 +165,7 @@ void initGL()
     glEnable(GL_COLOR_MATERIAL);
 
 
-    glClearColor(0, 0, 0, 0);                   // background color
+    glClearColor(0.7f, 0.7f, 0.7f, 1.0f);                   // background color
     glClearStencil(0);                          // clear stencil buffer
     glClearDepth(1.0f);                         // 0 is near, 1 is far
     glDepthFunc(GL_LEQUAL);
@@ -244,19 +244,19 @@ Vector3f convertTo3DPoint(int x, int y){
       // oriented as if the four boxes folded up to become the walls
       if(x >= SCREEN_WIDTH/3 && x <= 2*SCREEN_WIDTH/3 && y >= SCREEN_HEIGHT/3 && y <= 2*SCREEN_HEIGHT/3){
         // middle box = floor of room
-        return Vector3f((x-SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), 0, (y-SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
+        return Vector3f((x-SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), 0.01, (y-SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
       } else if (x >= SCREEN_WIDTH/3 && x <= 2*SCREEN_WIDTH/3 && y >=0 && y <= SCREEN_HEIGHT/3) {
         // top box = back wall
-       return Vector3f((x-SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), (SCREEN_HEIGHT/3 - y)*(room_dim/(SCREEN_HEIGHT/3)), 0);
+       return Vector3f((x-SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), (SCREEN_HEIGHT/3 - y)*(room_dim/(SCREEN_HEIGHT/3)), 0.03);
       } else if (x >= SCREEN_WIDTH/3 && x <= 2*SCREEN_WIDTH/3 && y >= 2*SCREEN_HEIGHT/3 && y <= SCREEN_HEIGHT){
         // bottom box = front wall
         return Vector3f((x-SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), (y - SCREEN_HEIGHT)*(room_dim/(SCREEN_HEIGHT/3)) + room_dim, room_dim);
       } else if(x >= 0 && x <= SCREEN_WIDTH/3 && y >= SCREEN_HEIGHT/3 && y <= 2*SCREEN_HEIGHT/3) {
         // left box = left wall
-        return Vector3f(0,(SCREEN_WIDTH/3 - x)*(room_dim/(SCREEN_WIDTH/3)), (y - SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
+        return Vector3f(0.01,(SCREEN_WIDTH/3 - x)*(room_dim/(SCREEN_WIDTH/3)), (y - SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
       } else {
         // right box = right wall
-        return Vector3f(room_dim,(x - 2*SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), (y - SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
+        return Vector3f(room_dim-0.1,(x - 2*SCREEN_WIDTH/3)*(room_dim/(SCREEN_WIDTH/3)), (y - SCREEN_HEIGHT/3)*(room_dim/(SCREEN_HEIGHT/3)));
       }
 }
 void mouseDrawCB(int button, int state, int x, int y)

@@ -730,7 +730,7 @@ void displayCB()
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     initLights();
-    glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
+    glColor4f(0.0f, 1.0f, 1.0f, 0.1f);
 
     glPushMatrix();
     glTranslatef(light_xpos, light_ypos, light_zpos);
@@ -754,7 +754,7 @@ void displayCB()
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements_test);
     //glDrawElements(GL_TRIANGLES, numInact*3, GL_UNSIGNED_SHORT, 0);
 
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glColor4f(0.1f, 0.1f, 0.1f, 1.0f);
     glPopMatrix();
     // Draw the cubic room//////////////////////////////////////////////////////
     room();
