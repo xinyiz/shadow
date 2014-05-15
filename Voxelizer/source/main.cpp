@@ -754,9 +754,9 @@ void displayCB()
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_elements_test);
     //glDrawElements(GL_TRIANGLES, numInact*3, GL_UNSIGNED_SHORT, 0);
 
-    glColor4f(0.1f, 0.1f, 0.1f, 1.0f);
     glPopMatrix();
     // Draw the cubic room//////////////////////////////////////////////////////
+    glColor4f(0.1f, 0.1f, 0.1f, 1.0f);
     room();
   
     // Draw points

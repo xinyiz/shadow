@@ -48,7 +48,7 @@ bool initSharedMem()
 void initLights()
 {
     // set up light colors (ambient, diffuse, specular)
-    GLfloat lightKd[] = {0.2f, 0.6f, 0.9f, 1.0f};  // diffuse light
+    GLfloat lightKd[] = {1.0f, 1.0f, 1.0f, 1.0f};  // diffuse light
     GLfloat lightKs[] = {1, 1, 1, 1};           // specular light
     //glLightfv(GL_LIGHT0, GL_AMBIENT, lightKa);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightKd);
